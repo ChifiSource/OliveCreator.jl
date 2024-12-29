@@ -1,0 +1,156 @@
+name = "olive"
+uuid = "3aba9d3f-9c1d-4f01-9bdc-e5a7438c0e6b"
+authors = ["emmaccode <emmaccode@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Olive = "724ecaf6-c7a0-4c22-b37e-0bb7b4193da8"
+
+[olive]
+root = "emmac"
+
+[oliveusers.aosj]
+recents = ["./olive/src/olive.jl"]
+group = ["all", "root"]
+
+    [oliveusers.aosj.highlighting.julia]
+    string = "#007958"
+    number = "#8b0000"
+    using = "#006C67"
+    func = "#fc038c"
+    for = "#fc038c"
+    struct = "#fc038c"
+    funcn = "#2F387B"
+    mutable = "#006C67"
+    op = "#0C023E"
+    in = "#006C67"
+    import = "#fc038c"
+    comment = "#808080"
+    default = "#3D3D3D"
+    if = "#fc038c"
+    module = "#b81870"
+    end = "#b81870"
+    begin = "#fc038c"
+    exit = "#cc0099"
+    interp = "darkred"
+    char = "#8b0000"
+    abstract = "#006C67"
+    type = "#D67229"
+
+    [oliveusers.aosj.highlighting.toml]
+    string = "#007958"
+    number = "#8b0000"
+    default = "darkblue"
+    keys = "#D67229"
+    equals = "purple"
+
+    [oliveusers.aosj.highlighting.markdown]
+    bold = "darkblue"
+    point = "darkgreen"
+    italic = "#8b0000"
+    default = "brown"
+    keys = "#ffc00"
+    link = "#8b0000"
+    code = "#8b0000"
+    heading = "purple"
+
+    [oliveusers.aosj.creatorkeys]
+    v = "markdown"
+    c = "code"
+    m = "module"
+    "/" = "helprepl"
+    ";" = "shellrepl"
+    "]" = "pkgrepl"
+    i = "include"
+
+    [oliveusers.aosj.keybindings]
+    delete = ["Delete", "ctrl", "shift"]
+    explorer = ["E", "ctrl"]
+    find = ["F", "ctrl"]
+    cut = ["X", "ctrl", "shift"]
+    evaluate = ["Enter", "shift"]
+    copy = ["C", "ctrl", "shift"]
+    saveas = ["S", "ctrl", "shift"]
+    focusdown = ["ArrowDown", "shift"]
+    up = ["ArrowUp", "ctrl", "shift"]
+    save = ["s", "ctrl"]
+    focusup = ["ArrowUp", "shift"]
+    down = ["ArrowDown", "ctrl", "shift"]
+    new = ["Enter", "ctrl", "shift"]
+    paste = ["V", "ctrl", "shift"]
+    open = ["O", "ctrl"]
+
+[oliveusers.tsit]
+recents = ["/home/emmac/dev/packages/olive/OliveCreator/Project.toml"]
+group = ["all", "root"]
+
+    [oliveusers.tsit.highlighting.julia]
+    string = "#007958"
+    number = "#8b0000"
+    using = "#006C67"
+    func = "#fc038c"
+    for = "#fc038c"
+    struct = "#fc038c"
+    funcn = "#2F387B"
+    mutable = "#006C67"
+    op = "#0C023E"
+    import = "#fc038c"
+    in = "#006C67"
+    comment = "#808080"
+    default = "#3D3D3D"
+    if = "#fc038c"
+    module = "#b81870"
+    end = "#b81870"
+    begin = "#fc038c"
+    exit = "#cc0099"
+    interp = "darkred"
+    char = "#8b0000"
+    abstract = "#006C67"
+    type = "#D67229"
+
+    [oliveusers.tsit.highlighting.toml]
+    string = "#007958"
+    number = "#8b0000"
+    default = "darkblue"
+    keys = "#D67229"
+    equals = "purple"
+
+    [oliveusers.tsit.highlighting.markdown]
+    bold = "darkblue"
+    point = "darkgreen"
+    italic = "#8b0000"
+    default = "brown"
+    keys = "#ffc00"
+    link = "#8b0000"
+    code = "#8b0000"
+    heading = "purple"
+
+    [oliveusers.tsit.creatorkeys]
+    v = "markdown"
+    c = "code"
+    m = "module"
+    "/" = "helprepl"
+    ";" = "shellrepl"
+    "]" = "pkgrepl"
+    i = "include"
+
+    [oliveusers.tsit.keybindings]
+    delete = ["Delete", "ctrl", "shift"]
+    explorer = ["E", "ctrl"]
+    find = ["F", "ctrl"]
+    cut = ["X", "ctrl", "shift"]
+    copy = ["C", "ctrl", "shift"]
+    evaluate = ["Enter", "shift"]
+    saveas = ["S", "ctrl", "shift"]
+    focusdown = ["ArrowDown", "shift"]
+    up = ["ArrowUp", "ctrl", "shift"]
+    save = ["s", "ctrl"]
+    focusup = ["ArrowUp", "shift"]
+    down = ["ArrowDown", "ctrl", "shift"]
+    new = ["Enter", "ctrl", "shift"]
+    paste = ["V", "ctrl", "shift"]
+    open = ["O", "ctrl"]
+
+[oliveusers.emmac]
+group = ["all", "root"]
