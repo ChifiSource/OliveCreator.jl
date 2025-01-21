@@ -1,50 +1,3 @@
-mutable struct UserManager
-    names::Vector{String}
-    profile_img::Vector{String}
-    achievements::Vector{Vector{Int64}}
-    fi::Vector{Int64}
-    UserManager() = new(Vector{String}(), Vector{String}(), Vector{Int64}(), Vector{Int64}())
-end
-
-getindex(um::UserManager, n::Int64) = begin
-    return(um.names[n], um.profile_img[n], um.fi[n], um.achievements[n])::Tuple{String, String, Int64, Vector{Int64}}
-end
-
-getindex(um::UserManager, name::String) = begin
-    position = findfirst(n::String -> n == name, um.names)
-    if isnothing(position)
-        throw(KeyError(name))
-    end
-    um[position]::Tuple{String, String, Int64, Vector{Int64}}
-end
-
-function append!(um::UserManager, name::String, profile_img::String, fi::Int64, achievements::Int64 ...)
-    push!(um.names, name)
-    push!(um.profile_img, profile_img)
-    push!(um.fi, fi)
-    push!(um.achievements, [achievements ...])
-end
-
-USERS = UserManager()
-append!(USERS, "emmac", "https://avatars.githubusercontent.com/u/52672675?v=4", 1200, 1, 2)
-
-struct Achievement
-    fi::Int64
-    name::String
-    img::String
-    desc::String
-end
-
-function read_achievements()
-    raw::String = read("olive/achievements.txt", String)
-    [begin
-        splits = split(achievement_str, "|")
-        Achievement(parse(Int64, splits[1]), string(splits[2]), string(splits[3]), splits[4])
-    end for achievement_str in split(raw, "\n")]::Vector{Achievement}
-end
-
-ACHIEVEMENTS = read_achievements()
-
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
     proj::Project{<:Any})
     uname::String = proj[:uname]
@@ -249,27 +202,4 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:creator},
          push!(buttonbox, b)
      end
      buttonbox
-end
-
-function creator_auth(c::Toolips.AbstractConnection)::Bool
-    args = get_args(c)
-    if :key in keys(args)
-        if ~(args[:key] in keys(c[:OliveCore].client_keys))
-            write!(c, "bad key.")
-            return
-        end
-        uname = c[:OliveCore].client_keys[args[:key]]
-        if ~(get_ip(c) in keys(c[:OliveCore].names))
-            push!(c[:OliveCore].names, get_ip(c) => uname)
-        end
-        return(false)
-    end
-    if ~(get_ip(c) in keys(c[:OliveCore].names))
-        identifier = Olive.Toolips.gen_ref(4)
-        push!(c[:OliveCore].names, get_ip(c) => identifier)
-        push!(c[:OliveCore].client_data, identifier => Dict{String, Vector{String}}(
-            "group" => ["all"]))
-        return(false)
-    end 
-    true
 end
