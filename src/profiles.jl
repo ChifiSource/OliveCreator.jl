@@ -1,3 +1,4 @@
+
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
     proj::Project{<:Any})
     uname::String = proj[:uname]
@@ -30,7 +31,7 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
             on(c, save_button, "click") do cm2::ComponentModifier
                 set_children!(cm2, "controls", [editbutton])
                 [make_uneditable!(c, cm2, lcell, proj) for lcell in proj.data[:cells][2:end]]
-                Olive.IPyCells.save(proj.data[:cells][2:end], "olive/home/users/$(Olive.getname(c))/profile/profile.jl")
+                Olive.IPyCells.save(proj.data[:cells][2:end], "users/$(Olive.getname(c))/profile/profile.jl")
                 Olive.olive_notify!(cm2, "profile successfully saved")
             end
             set_children!(cm, "controls", [save_button])
