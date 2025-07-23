@@ -1,4 +1,7 @@
 function build(c::Connection, om::ComponentModifier, oe::OliveExtension{:memorylimiter})
+    if getname(c) == "guest"
+        return
+    end
     progress_bar::Component{:progress} = Components.progress("memoryusage", value = 0, min = 0, max = 100)
     style!(progress_bar, "display" => "inline-block")
     progress_label1::Component{:a} = a("memlabel", text = "0")

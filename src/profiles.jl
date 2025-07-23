@@ -126,9 +126,10 @@ end
 function build_base_profile_cell(c::Connection, cm::ComponentModifier, cell::Cell{<:Any}, 
     proj::Project{:profile}, editable::Bool)
     outer_box = div("cellcontainer$(cell.id)", align = "center")
+    style!(outer_box, "border" => "none")
     upper_box, lower_box, controller = make_control_boxes(c, cm, cell, proj)
     mid_box = div("cell$(cell.id)")
-    style!(mid_box, "border" => "3px solid #DDDDDD", "border-radius" => 0px)
+    style!(mid_box, "border-radius" => 0px)
     if editable
         push!(outer_box, upper_box, controller, mid_box, lower_box)
     else
@@ -203,4 +204,21 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:creator},
          push!(buttonbox, b)
      end
      buttonbox
+end
+
+function generate_profile(c::Toolips.AbstractConnection, user::AbstractString)
+    creator_auth(c)
+    name = Olive.getname(c)
+    read_in_cells = Olive.IPyCells.read_jl("users/$user/profile/profile.jl")
+    project_data = Dict{Symbol, Any}(:cells => Vector{Olive.Cell}([
+            Olive.Cell{:profileheader}(""), read_in_cells ...
+        ]), :pane => "one", :wd => "nothing", :uname => user)
+    Olive.CORE.users[name].environment.projects = Vector{Olive.Project}([Olive.Project{:profile}("@$user", project_data)])
+    if name == "guest"
+        Olive.make_session(c, key = false, themes_enabled = false, sheet = custom_sheet,
+            settings_enabled = false)
+    else
+        Olive.make_session(c, key = false, sheet = custom_sheet,
+            settings_enabled = false)
+    end
 end
