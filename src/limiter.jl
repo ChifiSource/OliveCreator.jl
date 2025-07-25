@@ -25,12 +25,13 @@ end
 
 on_code_evaluate(c::Connection, cm::ComponentModifier, oe::OliveExtension{:memorylimiter}, 
     cell::Cell{:code}, proj::Project{<:Any}) = begin
-    total_data::Int64 = sum([sumsizeof(project[:mod]) for project in c[:OliveCore].open[getname(c)].projects])
+    user = Olive.CORE.users[getname(c)]
+    total_data::Int64 = sum([sumsizeof(project[:mod]) for project in user.environment.projects])
     data_available::Int64 = 2147483648
     in_gb = total_data / 1000000000
     percentage = Int64(round(total_data / data_available * 100))
     if total_data > data_available
-        projs = c[:OliveCore].open[getname(c)].projects
+        projs = user.environment.projects
         pos = findfirst(pro -> pro.id == proj.id,
         projs)
         Olive.empty_module!(c, proj)
@@ -48,7 +49,7 @@ on_code_evaluate(c::Connection, cm::ComponentModifier, oe::OliveExtension{:memor
         cm["memoryusage"] = "value" => string(percentage)
         style!(cm, "memlabel", "color" => "red")
         on(c, cm, 2000) do cm2::ComponentModifier
-            total_data = sum([sumsizeof(project[:mod]) for project in c[:OliveCore].open[getname(c)].projects])
+            total_data = sum([sumsizeof(project[:mod]) for project in Olive.CORE.users[getname(c)].projects])
             data_available = 2147483648
             in_gb = total_data / 1000000000
             percentage = Int64(round(total_data / data_available * 100))
@@ -63,7 +64,7 @@ end
 
 function cell_bind!(c::Connection, cell::Cell{<:Any}, proj::Project{:readonly}, 
     km::ToolipsSession.KeyMap = ToolipsSession.KeyMap())
-    keybindings = c[:OliveCore].client_data[getname(c)]["keybindings"]
+    keybindings = c[:OliveCore].users[getname(c)]["keybindings"]
     ToolipsSession.bind(km, keybindings["save"], prevent_default = true) do cm::ComponentModifier
         save_project(c, cm, proj)
     end

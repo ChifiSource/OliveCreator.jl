@@ -3,6 +3,7 @@ using Olive
 using Olive.Toolips
 using Olive.Toolips.Components
 using Olive.ToolipsSession
+using ToolipsORM
 import Olive: build, evalin, Cell, Project, ComponentModifier, getname, build_base_cell, olive_notify!, OliveExtension
 import Olive: on_code_evaluate, cell_bind!
 import Base: getindex, delete!, append!
@@ -12,6 +13,7 @@ include("profiles.jl")
 include("splash.jl")
 include("limiter.jl")
 
+GUESTN = 0
 # Base users
 DB_INFO = ("", "", "")
 
@@ -27,23 +29,23 @@ mutable struct CreatorRoute <: CreatorCentralRoute
     CreatorRoute(routes::Vector) = new("/", routes)
 end
 
-function confirm_user_pwd()
+function get_user(orm::ToolipsORM.ORM, session_key::String, name::String, pwd::String)
+    push!(USRCACHE, session_key => name)
+end
+
+function decompress_user_data()
 
 end
 
-function get_user(name::String)
+function recompress_user_data()
 
 end
+
 
 route!(c::AbstractConnection, routes::Vector{<:CreatorCentralRoute}) = begin
     targeted_path::String = get_route(c)
     if length(targeted_path) > 1
         if targeted_path[1:2] == "/@"
-            session_key = Olive.get_session_key(c)
-            new_data = Dict{String, Any}("group" => "guest")
-            newuser = Olive.OliveUser{:guest}("guest", session_key, Olive.Environment("guest"), new_data)
-            Olive.init_user(newuser)
-            push!(Olive.CORE.users, newuser)
             generate_profile(c, targeted_path[3:end])
             return
         end
@@ -63,11 +65,18 @@ function creator_auth(c::Toolips.AbstractConnection)::Bool
         return(true)
     elseif haskey(USRCACHE, session_key)
        
-    else
+    elseif get_route(c) == "/"
         write!(c, SPLASH)
         return(false)
+    else
+        session_key = Olive.get_session_key(c)
+        new_data = Dict{String, Any}("group" => "guest")
+        newuser = Olive.OliveUser{:guest}("guest$(OliveCreator.GUESTN)", session_key, Olive.Environment("guest"), new_data)
+        Olive.init_user(newuser)
+        OliveCreator.GUESTN += 1
+        push!(Olive.CORE.users, newuser)
+        return(true)
     end
-    return
 end
 
 custom_sheet = begin 
@@ -102,7 +111,7 @@ main = route("/") do c::Toolips.AbstractConnection
     Olive.make_session(c, key = false, sheet = custom_sheet, icon = creator_heart)
 end
 
-isguest(name::String) = name == "guest" 
+isguest(name::String) = length(name) > 4 && name[1:5] == "guest"
 
 build(c::Connection, cm::ComponentModifier, oe::Olive.OliveExtension{:creator}) = begin
  #   progress_sty = style("::-webkit-progress-value", "background" => "#D36CB6")

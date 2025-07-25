@@ -4,7 +4,7 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
     uname::String = proj[:uname]
     user_data = USERS[uname]
     main_cell = div("cellcontainer$(cell.id)")
-    style!(main_cell, "display" => "inline-flex")
+    style!(main_cell, "display" => "inline-flex", "padding" => 3percent)
     info_box = div("userinfo")
     lvl_acc = floor.(Int, user_data[3] / 1000)
     level_label = h3("filabel", text = string(lvl_acc))
@@ -42,7 +42,9 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
                   proj))
                 return
             end
-            [make_editable!(c, cm, lcell, proj) for lcell in proj.data[:cells][2:end]]
+            for lcell in proj.data[:cells][2:end]
+                make_editable!(c, cm, lcell, proj)
+            end
         end
         push!(control_box, editbutton)
     end
@@ -74,7 +76,7 @@ function make_editable!(c::Connection, cm::ComponentModifier, cell::Cell{:blurb}
     style!(cm, "cell$cellid", "border" => "2px solid #DDD6DD")
     insert!(cm, "cellcontainer$cellid", 1, controls[1])
     insert!(cm, "cellcontainer$cellid", 2, controls[3])
-    append!(cm, "cellcontainer$cellid", 2, controls[2])
+    append!(cm, "cellcontainer$cellid", controls[2])
 end
 
 function make_uneditable!(c::Connection, cm::ComponentModifier, cell::Cell{<:Any}, 
@@ -89,7 +91,7 @@ function make_editable!(c::Connection, cm::ComponentModifier, cell::Cell{<:Any},
     controls = make_control_boxes(c, cm, cell, proj)
     insert!(cm, "cellcontainer$(cell.id)", 1, controls[1])
     insert!(cm, "cellcontainer$(cell.id)", 2, controls[3])
-    append!(cm, "cellcontainer$(cell.id)", 2, controls[2])
+    append!(cm, "cellcontainer$(cell.id)", controls[2])
 end
 
 function make_control_boxes(c::Connection, cm::ComponentModifier, cell::Cell{<:Any}, 
@@ -117,7 +119,7 @@ function make_control_boxes(c::Connection, cm::ComponentModifier, cell::Cell{<:A
     controller_box = div("$(cell.id)controls", align = "right")
     delete_butt = Olive.topbar_icon("addbottom$(cell.id)", "delete")
     on(c, delete_butt, "click") do cm2::ComponentModifier
-        Olive.cell_delete!(c, cm2, cell, proj)
+        Olive.cell_delete!(c, cm2, cell, proj[:cells])
     end
     push!(controller_box, delete_butt)
     return(upper_box, lower_box, controller_box)
@@ -186,10 +188,11 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:creator},
     proj::Project{:profile})
     cells = proj[:cells]
     windowname::String = proj.id
-    creatorkeys = c[:OliveCore].client_data[getname(c)]["creatorkeys"]
-     buttonbox = div("cellcontainer$(cell.id)")
-     push!(buttonbox, h3("spawn$(cell.id)", text = "new cell"))
-     signatures = [:blurb, :achievements, :progression, :recents, :projects, :linkbox, :codeoutput]
+    creatorkeys = c[:OliveCore].users[getname(c)].data["creatorkeys"]
+    signatures = [:blurb, :achievements, :progression, :recents, :projects, :linkbox, :codeoutput]
+    nameput = Components.textdiv("cell$(cell.id)")
+    buttonbox = div("cellcontainer$(cell.id)")
+    push!(buttonbox, h3("spawn$(cell.id)", text = "new cell"), nameput)
      for sig in signatures
          b = button("$(sig)butt", text = string(sig))
          on(c, b, "click") do cm2::ComponentModifier
