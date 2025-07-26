@@ -13,9 +13,11 @@ include("profiles.jl")
 include("splash.jl")
 include("limiter.jl")
 
-GUESTN = 0
+ZIP_DIR::String = ""
+
+GUESTN::UInt32 = UInt32(0)
 # Base users
-DB_INFO = ("", "", "")
+DB_INFO = ("":8000, "name", "pwd", "key")
 
 USRCACHE = Dict{String, String}()
 
@@ -28,19 +30,6 @@ mutable struct CreatorRoute <: CreatorCentralRoute
     routes::Vector{AbstractRoute}
     CreatorRoute(routes::Vector) = new("/", routes)
 end
-
-function get_user(orm::ToolipsORM.ORM, session_key::String, name::String, pwd::String)
-    push!(USRCACHE, session_key => name)
-end
-
-function decompress_user_data()
-
-end
-
-function recompress_user_data()
-
-end
-
 
 route!(c::AbstractConnection, routes::Vector{<:CreatorCentralRoute}) = begin
     targeted_path::String = get_route(c)
@@ -60,11 +49,13 @@ function creator_auth(c::Toolips.AbstractConnection)::Bool
     CORE = Olive.CORE
     args = get_args(c)
     session_key = Olive.get_session_key(c)
-    in_users = ~(isnothing(findfirst(usr -> usr.key == session_key, CORE.users)))
+    user_index = findfirst(usr -> usr.key == session_key, CORE.users)
+    in_users = ~(isnothing(user_index))
     if in_users
         return(true)
     elseif haskey(USRCACHE, session_key)
-       
+       load_client!(olive.CORE, USRCACHE[session_key], session_key)
+       return(true)
     elseif get_route(c) == "/"
         write!(c, SPLASH)
         return(false)
@@ -77,6 +68,48 @@ function creator_auth(c::Toolips.AbstractConnection)::Bool
         push!(Olive.CORE.users, newuser)
         return(true)
     end
+end
+
+function login_user(c::AbstractConnection, orm::ToolipsORM.ORM, session_key::String, 
+        name::String, pwd::String)
+    user_tablei = query(Int64, orm, "index", "users/name", name)
+    if user_tablei == 0
+        return("username $name does not exist")
+    end
+    correct_pwd = query(Bool, orm, "compare", "users/password", user_tablei, pwd)
+    if ~(correct_pwd)
+        return("incorrect password")
+    end
+    session_key = get_session_key(c)
+    load_client!(Olive.CORE, name, session_key)
+    nothing::Nothing
+end
+
+function decompress_user_data(name::String)
+    if isdir("users/$name")
+        return
+    end
+end
+
+function recompress_user_data(name::String)
+    if ~(isdir("users/$name"))
+        return
+    end
+end
+
+function load_client!(core::Olive.OliveCore, client_name::String, key::String)
+    found = findfirst(user -> user.name == client_name, core.users)
+    if ~(isnothing(found))
+        user = core.users[found]
+        user.key = key
+        return
+    end
+    decompress_user_data(name)
+    push!(USRCACHE, session_key => name)
+end
+
+function unload_client!(core::Olive.OliveCore, client_name::String)
+    
 end
 
 custom_sheet = begin 
