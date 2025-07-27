@@ -20,7 +20,7 @@ DB_INFO = ("":8000, "name", "pwd", "key")
 
 USRCACHE = Dict{String, String}()
 
-ORM_EXTENSION = ToolipsORM.ORM(DB_INFO[1], ToolipsORM.FFDriver, DB_INFO[2:end] ...)
+ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...)
 
 abstract type CreatorCentralRoute <: Toolips.AbstractHTTPRoute end
 
@@ -58,8 +58,9 @@ function creator_auth(c::Toolips.AbstractConnection)::Bool
        load_client!(olive.CORE, USRCACHE[session_key], session_key)
        return(true)
     elseif get_route(c) == "/"
-        
-        write!(c, SPLASH)
+        splash_cop = copy(SPLASH)
+        push!(splash_cop, build_main_box(c))
+        write!(c, splash_cop)
         return(false)
     else
         session_key = Olive.get_session_key(c)
@@ -72,13 +73,15 @@ function creator_auth(c::Toolips.AbstractConnection)::Bool
     end
 end
 
-function login_user(c::AbstractConnection, orm::ToolipsORM.ORM, session_key::String, 
+function login_user(c::AbstractConnection, orm::ToolipsORM.ORM, 
         name::String, pwd::String)
     user_tablei = query(Int64, orm, "index", "users/name", name)
     if user_tablei == 0
         return("username $name does not exist")
     end
     correct_pwd = query(Bool, orm, "compare", "users/password", user_tablei, pwd)
+    @warn correct_pwd
+    return
     if ~(correct_pwd)
         return("incorrect password")
     end
@@ -177,10 +180,16 @@ build(c::Connection, cm::ComponentModifier, oe::Olive.OliveExtension{:creator}) 
   olive_notify!(cm, "hi")
 end
 
+include("profiles.jl")
+include("splash.jl")
+include("limiter.jl")
+
 function start(ip::IP4 = "127.0.0.1":8000)
-    OliveCreator.ORM_EXTENSION = ToolipsORM.ORM(DB_INFO[1], ToolipsORM.FFDriver, DB_INFO[2:end] ...) 
+    
+    OliveCreator.SPLASH = build_splash()
+    OliveCreator.ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...) 
     connect!(OliveCreator.ORM_EXTENSION)
-    creator_route = CreatorRoute(copy(Olive.olive_routes))
+    creator_route = CreatorRoute(Olive.olive_routes)
     creator_route.routes["/"] = main
     Olive.olive_routes = [creator_route]
     push!(creator_route.routes, Olive.key_route)
@@ -188,12 +197,14 @@ function start(ip::IP4 = "127.0.0.1":8000)
     creator_route.routes = vcat(creator_route.routes, assets)
     Olive.SES.invert_active = true
     Olive.SES.active_routes = vcat(["/MaterialIcons.otf", "/favicon.ico"], [r.path for r in assets])
+    @warn Olive.SES.events
+    EVENTS = copy(Olive.SES.events)
     Olive.start(ip, path = ".")
+    @warn Olive.SES.events
+    SES.events = EVENTS
 end
 
-include("profiles.jl")
-include("splash.jl")
-include("limiter.jl")
+
 
 export evalin
 end # module OliveCreator
