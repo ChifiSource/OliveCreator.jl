@@ -1,20 +1,38 @@
-function build_login_box(c::AbstractConnection)
+function build_login_box(c::AbstractConnection, cm::ComponentModifier)
     unamelbl = a(text = "username/email: ")
     unameinput = textdiv("userinp", text = "")
-    style!(unameinput, "background-color" => "#1e1e1e", "color" => "white", 
-    "font-size" => 13pt, "font-weight" => "bold")
-    uname_section = section(children = [unamelbl, unameinput])
+    ToolipsSession.bind(c, cm, unameinput, "Enter", prevent_default = true) do cm
+        focus!(cm, "pwdinp")
+    end
+    common = ("background-color" => "#1e1e1e", "border-radius" => 4px)
+    style!(unameinput, "color" => "white", 
+        "font-size" => 13pt, "font-weight" => "bold", common ...)
+    uname_section = div("-", children = [unamelbl, unameinput])
     pwdlbl = a(text = "password: ")
     pwdinput = textdiv("pwdinp", text = "")
-    style!(pwdinput, "background-color" => "#1e1e1e", "color" => "#1e1e1e")
-    pwd_section = section(children = [pwdlbl, pwdinput])
-    
-    confirm_button = button("loginconf", text = "confirm")
-    on(c, confirm_button, "click") do cm::ComponentModifier
+    complete_login = cm -> begin
         provided_pwd = cm["pwdinp"]["text"]
         provided_name = cm["userinp"]["text"]
-        login_user(c, OliveCreator.ORM_EXTENSION, provided_name, provided_pwd)
+        success = login_user(c, OliveCreator.ORM_EXTENSION, provided_name, provided_pwd)
+        if typeof(success) <: AbstractString
+            if "errmsg" in cm
+                set_text!(cm, "errmsg", success)
+            else
+                error_a = a("errmsg", text = success)
+                append!(cm, "confsect", error_a)
+            end
+            return
+        end
+        session_key = get_session_key(c)
+        load_client!(Olive.CORE, provided_name, session_key)
+        redirect!(cm, "/")
     end
+    ToolipsSession.bind(complete_login, c, cm, pwdinput, "Enter", prevent_default = true)
+    style!(pwdinput, "color" => "white", "font-family" => "password", common ...)
+    pwd_section = div("-", children = [pwdlbl, pwdinput])
+    
+    confirm_button = button("loginconf", text = "confirm")
+    on(complete_login, c, confirm_button, "click")
     confirm_section = div("confsect", children = [confirm_button], align = "right")
     main_box = div("logheader", children = [uname_section, pwd_section, confirm_section], align = "left")
     main_box
@@ -28,7 +46,7 @@ function build_main_box(c::AbstractConnection)
     login_button = button("loginb", text = "login")
     on(c, login_button, "click") do cm::ComponentModifier
         remove!(cm, "logheader")
-        login_box = build_login_box(c)
+        login_box = build_login_box(c, cm)
         insert!(cm, "mainbox", 1, login_box)
     end
     get_key_button = button("getkeyb", text = "get your alpha key")
@@ -51,17 +69,17 @@ function build_splash()
     style!(creator, "position" => "absolute", "transition"  => 850ms, 
     "z-index" => -9, "opacity" => 0percent, "top" => 10percent, "left" => 55percent)
     hearts = [begin 
-                particle = img("heart-particle$count", src = "assets/heart.png")
-                trans_x = 54percent
-                z = string(rand(-15:-10))
-                scale = rand(1:9)
-                transition = rand(400:840) * ms
-                trans_y = rand(0:70) * percent
-                style!(particle, "position" => "absolute", "transform-origin" => "50% 50%", "transition" => transition,
-                    "transform" => "scale(.01$scale)", "left" => trans_x, "top" => trans_y,
-                    "z-index" => z, "opacity" => 0percent)
-                particle
-    end for count in 1:1000]
+        particle = img("heart-particle$count", src = "assets/heart.png")
+        trans_x = 54percent
+        z = string(rand(-15:-10))
+        scale = rand(1:9)
+        transition = rand(400:840) * ms
+        trans_y = rand(0:70) * percent
+        style!(particle, "position" => "absolute", "transform-origin" => "50% 50%", "transition" => transition,
+            "transform" => "scale(.01$scale)", "left" => trans_x, "top" => trans_y,
+            "z-index" => z, "opacity" => 0percent)
+        particle
+    end for count in 1:500]
     splash_div = div("splash", children = [creator, hearts ...])
     style!(splash_div, "pointer-events" => "none", "position" => "absolute", "width" => 100percent, "height" => 100percent, 
     "top" => 0percent, "left" => 0percent, "padding" => 0percent, "overflow" => "visible")

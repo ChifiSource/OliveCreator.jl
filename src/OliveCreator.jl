@@ -5,7 +5,7 @@ using Olive.Toolips.Components
 using Olive.ToolipsSession
 using ToolipsORM
 import Olive: build, evalin, Cell, Project, ComponentModifier, getname, build_base_cell, olive_notify!, OliveExtension
-import Olive: on_code_evaluate, cell_bind!
+import Olive: on_code_evaluate, cell_bind!, get_session_key
 import Base: getindex, delete!, append!
 import Toolips: route!, router_name
 include("users.jl")
@@ -80,13 +80,9 @@ function login_user(c::AbstractConnection, orm::ToolipsORM.ORM,
         return("username $name does not exist")
     end
     correct_pwd = query(Bool, orm, "compare", "users/password", user_tablei, pwd)
-    @warn correct_pwd
-    return
     if ~(correct_pwd)
         return("incorrect password")
     end
-    session_key = get_session_key(c)
-    load_client!(Olive.CORE, name, session_key)
     nothing::Nothing
 end
 
@@ -109,6 +105,8 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
         user.key = key
         return
     end
+    @warn "decompressing user $name"
+    return
     decompress_user_data(name)
     # TODO load client data from their user.toml
     data = Olive.TOML.parse(read("users/$name/settings.toml", String))
@@ -136,6 +134,8 @@ end
 custom_sheet = begin 
     custom_sheet = Olive.olivesheet()
     stys = custom_sheet[:children]
+    push!(stys, Style("@font-face", "font-family" => "'password'", "src" => "url('/assets/password.ttf') format('truetype')", 
+    "font-weight" => "normal", "font-style" => "normal"))
     delete!(stys, "div.topbar")
     stys["h5"]["color"] = "#1e1e1e"
     style!(stys["h5"], "font-size" => 20pt)
