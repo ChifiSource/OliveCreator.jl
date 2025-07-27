@@ -9,9 +9,8 @@ import Olive: on_code_evaluate, cell_bind!
 import Base: getindex, delete!, append!
 import Toolips: route!, router_name
 include("users.jl")
-include("profiles.jl")
-include("splash.jl")
-include("limiter.jl")
+
+COLUMN_ORDER = String[]
 
 ZIP_DIR::String = ""
 
@@ -20,6 +19,8 @@ GUESTN::UInt32 = UInt32(0)
 DB_INFO = ("":8000, "name", "pwd", "key")
 
 USRCACHE = Dict{String, String}()
+
+ORM_EXTENSION = ToolipsORM.ORM(DB_INFO[1], ToolipsORM.FFDriver, DB_INFO[2:end] ...)
 
 abstract type CreatorCentralRoute <: Toolips.AbstractHTTPRoute end
 
@@ -57,6 +58,7 @@ function creator_auth(c::Toolips.AbstractConnection)::Bool
        load_client!(olive.CORE, USRCACHE[session_key], session_key)
        return(true)
     elseif get_route(c) == "/"
+        
         write!(c, SPLASH)
         return(false)
     else
@@ -105,22 +107,44 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
         return
     end
     decompress_user_data(name)
+    # TODO load client data from their user.toml
+    data = Olive.TOML.parse(read("users/$name/settings.toml", String))
+    new_user = Olive.OliveUser{:creator}(name, key, Environment("creator"), data)
+    push!(core.users, new_user)
     push!(USRCACHE, session_key => name)
 end
 
 function unload_client!(core::Olive.OliveCore, client_name::String)
-    
+    if isdir("users/$client_name")
+        client_settings = deepcopy(CORE.users[name].data)
+        [onsave(client_settings, OliveExtension{m.sig.parameters[3].parameters[1]}()) for m in methods(onsave, [AbstractDict, OliveExtension{<:Any}])]
+        open("users/$client_name/settings.toml", "w") do io
+            TOML.print(io, client_settings)
+        end
+        recompress_user_data(client_name)
+    end
+    found_position = findfirst(user -> user.name == client_name, core.users)
+    if isnothing(found_position)
+        return
+    end
+    deleteat!(CORE.users, found_position)
 end
 
 custom_sheet = begin 
     custom_sheet = Olive.olivesheet()
     stys = custom_sheet[:children]
     delete!(stys, "div.topbar")
+    stys["h5"]["color"] = "#1e1e1e"
+    style!(stys["h5"], "font-size" => 20pt)
+    stys["button"]["border-radius"] = 3px
+    stys["button"]["border"] = "2px solid #3D3D3D"
     stys[".material-icons"]["color"] = "#171717"
     new_topbars = style("div.topbar", 
     "border-radius" => "5px", "background-color" => "#f197b0", "transition" => 500ms)
     stys["body"]["background-color"] = "#171717"
-    progress_sty = style("::-webkit-progress-value", "background" => "#D36CB6")
+    style!(stys["button"], "margin-right" => 1px, "font-size" => 17pt, "cursor" => "pointer")
+    progress_sty = style("::-webkit-progress-value", "background" => "#D36CB6", "cursor" => "pointer")
+    stys["p"]["color"] = "#ffebcd"
     stys["a.tablabel"]["color"] = "#171717"
     stys["div.tabopen"]["background-color"] = "#e77254"
     style!(stys["div.projectwindow"], "background-color" => "#2e2e2e")
@@ -154,6 +178,8 @@ build(c::Connection, cm::ComponentModifier, oe::Olive.OliveExtension{:creator}) 
 end
 
 function start(ip::IP4 = "127.0.0.1":8000)
+    OliveCreator.ORM_EXTENSION = ToolipsORM.ORM(DB_INFO[1], ToolipsORM.FFDriver, DB_INFO[2:end] ...) 
+    connect!(OliveCreator.ORM_EXTENSION)
     creator_route = CreatorRoute(copy(Olive.olive_routes))
     creator_route.routes["/"] = main
     Olive.olive_routes = [creator_route]
@@ -164,6 +190,10 @@ function start(ip::IP4 = "127.0.0.1":8000)
     Olive.SES.active_routes = vcat(["/MaterialIcons.otf", "/favicon.ico"], [r.path for r in assets])
     Olive.start(ip, path = ".")
 end
+
+include("profiles.jl")
+include("splash.jl")
+include("limiter.jl")
 
 export evalin
 end # module OliveCreator
