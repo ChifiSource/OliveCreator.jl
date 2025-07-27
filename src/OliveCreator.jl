@@ -8,8 +8,11 @@ import Olive: build, evalin, Cell, Project, ComponentModifier, getname, build_ba
 import Olive: on_code_evaluate, cell_bind!, get_session_key
 import Base: getindex, delete!, append!
 import Toolips: route!, router_name
-include("users.jl")
+# using ZipFile
 
+USER_DIR = "users"
+
+include("users.jl")
 COLUMN_ORDER = String[]
 
 ZIP_DIR::String = ""
@@ -18,7 +21,8 @@ GUESTN::UInt32 = UInt32(0)
 # Base users
 DB_INFO = ("":8000, "name", "pwd", "key")
 
-USRCACHE = Dict{String, String}()
+KEY_CACHE = Dict{String, String}()
+
 
 ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...)
 
@@ -54,8 +58,8 @@ function creator_auth(c::Toolips.AbstractConnection)::Bool
     in_users = ~(isnothing(user_index))
     if in_users
         return(true)
-    elseif haskey(USRCACHE, session_key)
-       load_client!(olive.CORE, USRCACHE[session_key], session_key)
+    elseif haskey(KEY_CACHE, session_key)
+       load_client!(olive.CORE, KEY_CACHE[session_key], session_key)
        return(true)
     elseif get_route(c) == "/"
         splash_cop = copy(SPLASH)
@@ -86,18 +90,6 @@ function login_user(c::AbstractConnection, orm::ToolipsORM.ORM,
     nothing::Nothing
 end
 
-function decompress_user_data(name::String)
-    if isdir("users/$name")
-        return
-    end
-end
-
-function recompress_user_data(name::String)
-    if ~(isdir("users/$name"))
-        return
-    end
-end
-
 function load_client!(core::Olive.OliveCore, client_name::String, key::String)
     found = findfirst(user -> user.name == client_name, core.users)
     if ~(isnothing(found))
@@ -112,7 +104,7 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
     data = Olive.TOML.parse(read("users/$name/settings.toml", String))
     new_user = Olive.OliveUser{:creator}(name, key, Environment("creator"), data)
     push!(core.users, new_user)
-    push!(USRCACHE, session_key => name)
+    push!(KEY_CACHE, session_key => name)
 end
 
 function unload_client!(core::Olive.OliveCore, client_name::String)
@@ -139,15 +131,22 @@ custom_sheet = begin
     delete!(stys, "div.topbar")
     stys["h5"]["color"] = "#1e1e1e"
     style!(stys["h5"], "font-size" => 20pt)
-    stys["button"]["border-radius"] = 3px
-    stys["button"]["border"] = "2px solid #3D3D3D"
+    buttons = stys["button"]
+    buttons["border-radius"] = 4px
+    buttons["border"] = "2px solid #3D3D3D"
     stys[".material-icons"]["color"] = "#171717"
+    push!(stys, buttons[:extras] ...)
+    delete!(buttons.properties, :extras)
     new_topbars = style("div.topbar", 
-    "border-radius" => "5px", "background-color" => "#f197b0", "transition" => 500ms)
+        "border-radius" => "5px", "background-color" => "#f197b0", "transition" => 500ms)
     stys["body"]["background-color"] = "#171717"
-    style!(stys["button"], "margin-right" => 1px, "font-size" => 17pt, "cursor" => "pointer")
+    style!(stys["button"], "margin-right" => 2px, "font-size" => 15pt, "cursor" => "pointer", 
+        "padding" => 1.25percent, "color" => "#562d57", "font-weight" => "bold")
     progress_sty = style("::-webkit-progress-value", "background" => "#D36CB6", "cursor" => "pointer")
     stys["p"]["color"] = "#ffebcd"
+    standard_inp = style("div.stdinp", "background-color" => "#1e1e1e", "border-radius" => 4px, "padding" => 1.25percent, 
+        "color" => "white", "font-size" => 15pt)
+    push!(stys, standard_inp)
     stys["a.tablabel"]["color"] = "#171717"
     stys["div.tabopen"]["background-color"] = "#e77254"
     style!(stys["div.projectwindow"], "background-color" => "#2e2e2e")
@@ -185,10 +184,15 @@ include("splash.jl")
 include("limiter.jl")
 
 function start(ip::IP4 = "127.0.0.1":8000)
-    
     OliveCreator.SPLASH = build_splash()
-    OliveCreator.ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...) 
-    connect!(OliveCreator.ORM_EXTENSION)
+    OliveCreator.ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...)
+    try
+        connect!(OliveCreator.ORM_EXTENSION)
+    catch
+        throw("""failed to connect to database server, make sure it is running, firewall is not in the way, and 
+            OliveCreator.DB_INFO is set to the proper DB_INFO.""")
+    end
+
     creator_route = CreatorRoute(Olive.olive_routes)
     creator_route.routes["/"] = main
     Olive.olive_routes = [creator_route]
@@ -197,11 +201,10 @@ function start(ip::IP4 = "127.0.0.1":8000)
     creator_route.routes = vcat(creator_route.routes, assets)
     Olive.SES.invert_active = true
     Olive.SES.active_routes = vcat(["/MaterialIcons.otf", "/favicon.ico"], [r.path for r in assets])
-    @warn Olive.SES.events
     EVENTS = copy(Olive.SES.events)
     Olive.start(ip, path = ".")
-    @warn Olive.SES.events
     SES.events = EVENTS
+    nothing
 end
 
 

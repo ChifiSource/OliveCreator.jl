@@ -1,32 +1,62 @@
-mutable struct UserManager
-    names::Vector{String}
-    profile_img::Vector{String}
-    achievements::Vector{Vector{Int64}}
-    fi::Vector{Int64}
-    UserManager() = new(Vector{String}(), Vector{String}(), Vector{Int64}(), Vector{Int64}())
+function decompress_user_data(name::String)
+    if isdir(OliveCreator.USER_DIR * "/$name")
+        return
+    end
+    true
 end
 
-getindex(um::UserManager, n::Int64) = begin
-    return(um.names[n], um.profile_img[n], um.fi[n], um.achievements[n])::Tuple{String, String, Int64, Vector{Int64}}
+function recompress_user_data(name::String; remove::Bool = true)
+    if ~(OliveCreator.USER_DIR * "/$name")
+        return
+    end
+end
+
+function create_userdir(name::String)
+
+end
+
+mutable struct CreatorUser
+    name::String
+    level::Float64
+    profile_img::String
+    fi::Int64
+    achievements::Vector{Int64}
+    missions::Dict{Int64, Bool}
+    messages::Vector{Pair{String, String}}
+end
+
+mutable struct UserManager
+    cached::Vector{CreatorUser}
+    UserManager() = new(Vector{CreatorUser}())
 end
 
 getindex(um::UserManager, name::String) = begin
-    position = findfirst(n::String -> n == name, um.names)
-    if isnothing(position)
-        throw(KeyError(name))
+    found = findfirst(user::CreatorUser -> (user.name == name), um.cached)
+    if ~(isnothing(found))
+        return(um.cached[name])::CreatorUser
     end
-    um[position]::Tuple{String, String, Int64, Vector{Int64}}
+    if ~(isdir(OliveCreator.USER_DIR * "/$name"))
+        success = decompress_user_data(name)
+        if ~(success)
+            return(success)
+        end
+    end
+    user_data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$name/creator/info.toml", String))
+    x = user_data["messages"]
+    n = length(x)
+    messages = [x[e] => x[e + 1] for e in range(1, n, step = 2)]
+    loaded_user = CreatorUser(name, user_data["level"], user_data["img"], 
+        user_data["fi"], user_data["achievements"], user_data["missions"], 
+        messages)
+    user_data = nothing
+    push!(um.cached, loaded_user)
+    loaded_user::CreatorUser
 end
 
-function append!(um::UserManager, name::String, profile_img::String, fi::Int64, achievements::Int64 ...)
-    push!(um.names, name)
-    push!(um.profile_img, profile_img)
-    push!(um.fi, fi)
-    push!(um.achievements, [achievements ...])
-end
 
-USERS = UserManager()
-append!(USERS, "emmac", "https://avatars.githubusercontent.com/u/52672675?v=4", 1200, 1, 2)
+USERS_CACHE = UserManager()
+
+@warn USERS_CACHE["emmac"]
 
 struct Achievement
     fi::Int64

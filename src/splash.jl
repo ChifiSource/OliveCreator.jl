@@ -1,15 +1,12 @@
 function build_login_box(c::AbstractConnection, cm::ComponentModifier)
     unamelbl = a(text = "username/email: ")
-    unameinput = textdiv("userinp", text = "")
+    unameinput = textdiv("userinp", text = "", class = "stdinp")
     ToolipsSession.bind(c, cm, unameinput, "Enter", prevent_default = true) do cm
         focus!(cm, "pwdinp")
     end
-    common = ("background-color" => "#1e1e1e", "border-radius" => 4px)
-    style!(unameinput, "color" => "white", 
-        "font-size" => 13pt, "font-weight" => "bold", common ...)
     uname_section = div("-", children = [unamelbl, unameinput])
     pwdlbl = a(text = "password: ")
-    pwdinput = textdiv("pwdinp", text = "")
+    pwdinput = textdiv("pwdinp", text = "", class = "stdinp")
     complete_login = cm -> begin
         provided_pwd = cm["pwdinp"]["text"]
         provided_name = cm["userinp"]["text"]
@@ -28,9 +25,8 @@ function build_login_box(c::AbstractConnection, cm::ComponentModifier)
         redirect!(cm, "/")
     end
     ToolipsSession.bind(complete_login, c, cm, pwdinput, "Enter", prevent_default = true)
-    style!(pwdinput, "color" => "white", "font-family" => "password", common ...)
+    style!(pwdinput, "font-family" => "password")
     pwd_section = div("-", children = [pwdlbl, pwdinput])
-    
     confirm_button = button("loginconf", text = "confirm")
     on(complete_login, c, confirm_button, "click")
     confirm_section = div("confsect", children = [confirm_button], align = "right")
@@ -54,7 +50,13 @@ function build_main_box(c::AbstractConnection)
 
     end
     key_button = button("redeem", text = "redeem alpha key")
+    on(c, key_button, "click") do cm::ComponentModifier
+
+    end
     guest_button = button("guestb", text = "enter as guest")
+    on(c, guest_button, "click") do cm::ComponentModifier
+
+    end
     box = div("mainbox", children = [open_alphal, login_button, key_button, get_key_button, guest_button])
     style!(box, "position" => "absolute", "padding" => 3percent, "width" => 40percent, "top" => 35percent, "left" => 27percent, 
         "z-index" => 5, "transform" => "scale(1, 0)", "background-color" => "#cb416b", "border" => "11px solid #1e1e1e", "transition" => 850ms)
@@ -65,9 +67,9 @@ function build_splash()
     creator = img("creator", src = "assets/creator_holding_heart.png", width = 5percent)
     creator_header = h2("creator-label", text = "creator")
     style!(creator_header, "font-weight" => 400, "position" => "absolute", 
-    "top" => 20percent, "left" => 45percent, "width" => 10percent, "font-size" => 100pt, "color" => "white", "opacity" => 0percent, "transition" => 2s)
+        "top" => 20percent, "left" => 45percent, "width" => 10percent, "font-size" => 100pt, "color" => "white", "opacity" => 0percent, "transition" => 2s)
     style!(creator, "position" => "absolute", "transition"  => 850ms, 
-    "z-index" => -9, "opacity" => 0percent, "top" => 10percent, "left" => 55percent)
+        "z-index" => -9, "opacity" => 0percent, "top" => 10percent, "left" => 55percent)
     hearts = [begin 
         particle = img("heart-particle$count", src = "assets/heart.png")
         trans_x = 54percent
@@ -85,15 +87,20 @@ function build_splash()
     "top" => 0percent, "left" => 0percent, "padding" => 0percent, "overflow" => "visible")
     scr = on(700) do cl::ClientModifier
         style!(cl, "creator", "opacity" => 100percent, "transform" => "rotate(10deg)", "left" => 50percent)
+        next_cl = ClientModifier()
         [begin
-            trans_y = rand(-5:100) * percent
-            trans_x = rand(-5:100) * percent
+            trans_y = rand(-5:100)
+            trans_x = rand(-5:100)
             scale = rand(1:4)
             rotation = rand(-20:20) * deg
+            offset = rand(-240:240)
             style!(cl, "heart-particle$count", "opacity" => 100percent,
-            "transform" => "scale(.0$scale) rotate($rotation)", "top" => trans_y, "left" => trans_x)
+                "transform" => "scale(.0$scale) rotate($rotation)", "top" => trans_y * percent, "left" => trans_x * percent)
+            style!(next_cl, "heart-particle$count", "transition" => 3000s, "transform" => "rotate($(offset)deg)", 
+                "left" => (trans_x + offset) * percent, "top" => (trans_y + offset) * percent)
         end for count in 1:500]
         next!(cl, creator) do cl::ClientModifier
+            push!(cl.changes, next_cl.changes ...)
             style!(cl, "mainbox", "transform" => "scale(1, 1)")
         end
     end
