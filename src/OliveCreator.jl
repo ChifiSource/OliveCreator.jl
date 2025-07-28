@@ -92,7 +92,9 @@ end
 
 function load_client!(core::Olive.OliveCore, client_name::String, key::String)
     found = findfirst(user -> user.name == client_name, core.users)
-    if ~(isnothing(found))
+    found_value = ~(isnothing(found))
+    found_dir = client_name in readdir(OliveCreator.USER_DIR)
+    if found_value && found_dir
         user = core.users[found]
         if typeof(user) != Olive.OliveUser{:creator}
             data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$client_name/creator/settings.toml", String))
@@ -109,8 +111,18 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
         end
         user.key = key
         return
+    elseif found_value
+        decompress_user_data(client_name)
+        if typeof(user) != Olive.OliveUser{:creator}
+            data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$client_name/creator/settings.toml", String))
+            core.users[found] = Olive.OliveUser{:olive}(client_name, key, Olive.Environment("olive"), data)
+            user = core.users[found]
+            Olive.init_user(user)
+            user.environment.pwd = USER_DIR * "/$client_name/wd"
+            push!(user.environment.directories, Olive.Directory(user.environment.pwd, dirtype = "pwd"))
+        end
+        return
     end
-    return
     decompress_user_data(client_name)
     # TODO load client data from their user.toml
     data = Olive.TOML.parse(read("users/$client_name/settings.toml", String))

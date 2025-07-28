@@ -52,7 +52,8 @@ function build_main_box(c::AbstractConnection)
     end
     key_button = button("redeem", text = "redeem alpha key")
     on(c, key_button, "click") do cm::ComponentModifier
-
+        success = decompress_user_data("emmac")
+        @warn success
     end
     guest_button = button("guestb", text = "enter as guest")
     on(c, guest_button, "click") do cm::ComponentModifier

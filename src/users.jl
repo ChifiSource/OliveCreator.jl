@@ -1,7 +1,33 @@
 function decompress_user_data(name::String)
-    if isdir(OliveCreator.USER_DIR * "/$name")
+    user_directory = OliveCreator.USER_DIR * "/$name"
+    if isdir(user_directory)
         true
+    else
+        mkdir(user_directory)
     end
+    zip_uri = OliveCreator.ZIP_DIR * "/$name.zip"
+    zip_reader = ZipFile.Reader(zip_uri)
+    for file in zip_reader.files
+        fname = file.name
+        @warn file.name
+        dirs = split(replace(fname, OliveCreator.USER_DIR => ""), "/")
+        if length(dirs) > 2
+            current_dir = user_directory
+            for dir in dirs[2:end - 1]
+                current_dir = current_dir * "/$dir"
+                if ~(isdir(current_dir))
+                 mkdir(current_dir)
+                 @info current_dir
+                end
+            end
+        end
+        f_uri = OliveCreator.USER_DIR * "/" * file.name
+        touch(f_uri)
+        open(f_uri, "w") do o
+            write(o, read(file, String))
+        end
+    end
+    close(zip_reader)
     true
 end
 
@@ -58,7 +84,7 @@ getindex(um::UserManager, name::String) = begin
             return(success)
         end
     end
-    user_data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$name/creator/info.toml", String))
+    user_data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$name/creator/settings.toml", String))
     x = user_data["messages"]
     n = length(x)
     messages = [x[e] => x[e + 1] for e in range(1, n, step = 2)]
