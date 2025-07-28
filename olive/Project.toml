@@ -14,11 +14,17 @@ dirs = ["home"]
 load = ["olivebase"]
 uris = ["./olive"]
 
+[groups.users]
+cells = ["code", "markdown"]
+dirs = []
+load = ["olivebase"]
+uris = []
+
 [groups.guest]
 cells = ["code", "markdown"]
-dirs = ["home"]
+dirs = []
 load = ["olivebase"]
-uris = ["./olive"]
+uris = []
 
 [olive]
 home = "./olive"
@@ -106,8 +112,14 @@ group = "guest"
     project-new = ["N", "ctrl", "shift"]
 
 [oliveusers.emmac]
-recents = ["./olive/src/olive.jl", "./olive/home/users/emmac/profile/profile.jl"]
+messages = ["global", "hello world"]
+recents = ["./olive/src/olive.jl", "./olive/home/users/emmac/profile/profile.jl", "/home/emmac/dev/packages/olive/OliveCreator.jl/dev.jl", "users/emmac/wd/testfile.jl", "users/README.md"]
+img = ""
+achievements = [0]
 group = "root"
+
+    [oliveusers.emmac.missions]
+    0 = false
 
     [oliveusers.emmac.creatorkeys]
     v = "markdown"
@@ -131,7 +143,7 @@ group = "root"
     import = "#fc038c"
     op = "#0C023E"
     comment = "#808080"
-    default = "#3D3D3D"
+    default = "#ffffff"
     if = "#fc038c"
     module = "#b81870"
     end = "#b81870"
@@ -145,7 +157,7 @@ group = "root"
     [oliveusers.emmac.highlighting.toml]
     string = "#007958"
     number = "#8b0000"
-    default = "darkblue"
+    default = "#ffffff"
     keys = "#D67229"
     equals = "purple"
 
@@ -163,15 +175,18 @@ group = "root"
     delete = ["Delete", "ctrl", "shift"]
     explorer = ["E", "ctrl"]
     find = ["F", "ctrl"]
+    undo = ["Z", "ctrl", "shift"]
     cut = ["X", "ctrl", "shift"]
-    copy = ["C", "ctrl", "shift"]
     evaluate = ["Enter", "shift"]
+    copy = ["C", "ctrl", "shift"]
     saveas = ["S", "ctrl", "shift"]
     focusdown = ["ArrowDown", "shift"]
     up = ["ArrowUp", "ctrl", "shift"]
+    select = ["A", "ctrl", "shift"]
     save = ["s", "ctrl"]
     focusup = ["ArrowUp", "shift"]
     down = ["ArrowDown", "ctrl", "shift"]
     new = ["Enter", "ctrl", "shift"]
     paste = ["V", "ctrl", "shift"]
     open = ["O", "ctrl"]
+    project-new = ["N", "ctrl", "shift"]

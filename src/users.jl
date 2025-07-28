@@ -1,14 +1,31 @@
 function decompress_user_data(name::String)
     if isdir(OliveCreator.USER_DIR * "/$name")
-        return
+        true
     end
     true
 end
 
 function recompress_user_data(name::String; remove::Bool = true)
-    if ~(OliveCreator.USER_DIR * "/$name")
-        return
+    user_directory = OliveCreator.USER_DIR * "/$name"
+    if ~(isdir(user_directory))
+        return(true)
     end
+    zip_uri = OliveCreator.ZIP_DIR * "/$name.zip"
+    if ~(isfile(zip_uri))
+        touch(zip_uri)
+    end
+    zip_writer = ZipFile.Writer(zip_uri)
+    for uri in Toolips.route_from_dir(user_directory)
+        zip_uri = replace(uri, "users/" => "")
+        file = ZipFile.addfile(zip_writer, zip_uri)
+        write(file, read(uri, String))
+        close(file)
+    end
+    close(zip_writer)
+    if remove
+        rm("users/$name", recursive = true)
+    end
+    return(true)
 end
 
 function create_userdir(name::String)
@@ -45,18 +62,15 @@ getindex(um::UserManager, name::String) = begin
     x = user_data["messages"]
     n = length(x)
     messages = [x[e] => x[e + 1] for e in range(1, n, step = 2)]
-    loaded_user = CreatorUser(name, user_data["level"], user_data["img"], 
-        user_data["fi"], user_data["achievements"], user_data["missions"], 
+    loaded_user = CreatorUser(name, 0.0, user_data["img"], 
+        0, user_data["achievements"], user_data["missions"], 
         messages)
     user_data = nothing
     push!(um.cached, loaded_user)
     loaded_user::CreatorUser
 end
 
-
 USERS_CACHE = UserManager()
-
-@warn USERS_CACHE["emmac"]
 
 struct Achievement
     fi::Int64

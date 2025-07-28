@@ -47,7 +47,8 @@ function build_main_box(c::AbstractConnection)
     end
     get_key_button = button("getkeyb", text = "get your alpha key")
     on(c, get_key_button, "click") do cm::ComponentModifier
-
+        success = recompress_user_data("emmac", remove = false)
+        @warn success
     end
     key_button = button("redeem", text = "redeem alpha key")
     on(c, key_button, "click") do cm::ComponentModifier
@@ -96,7 +97,7 @@ function build_splash()
             offset = rand(-240:240)
             style!(cl, "heart-particle$count", "opacity" => 100percent,
                 "transform" => "scale(.0$scale) rotate($rotation)", "top" => trans_y * percent, "left" => trans_x * percent)
-            style!(next_cl, "heart-particle$count", "transition" => 3000s, "transform" => "rotate($(offset)deg)", 
+            style!(next_cl, "heart-particle$count", "transition" => 3000s, "transform" => "rotate($(offset)deg) scale(0.0$(scale + 1))", 
                 "left" => (trans_x + offset) * percent, "top" => (trans_y + offset) * percent)
         end for count in 1:500]
         next!(cl, creator) do cl::ClientModifier

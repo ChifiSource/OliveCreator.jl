@@ -1,0 +1,76 @@
+img = ""
+achievements = [0]
+messages = ["global", "hello world"]
+recents = ["./olive/src/olive.jl", "./olive/home/users/emmac/profile/profile.jl", "/home/emmac/dev/packages/olive/OliveCreator.jl/dev.jl"]
+group = "root"
+[missions]
+0 = false
+[creatorkeys]
+v = "markdown"
+c = "code"
+m = "module"
+"/" = "helprepl"
+";" = "shellrepl"
+"]" = "pkgrepl"
+i = "include"
+
+[highlighting.julia]
+string = "#007958"
+number = "#8b0000"
+using = "#006C67"
+func = "#fc038c"
+for = "#fc038c"
+struct = "#fc038c"
+funcn = "#2F387B"
+mutable = "#006C67"
+op = "#0C023E"
+import = "#fc038c"
+in = "#006C67"
+comment = "#808080"
+default = "#ffffff"
+if = "#fc038c"
+module = "#b81870"
+end = "#b81870"
+begin = "#fc038c"
+exit = "#cc0099"
+interp = "#420000"
+char = "#8b0000"
+abstract = "#006C67"
+type = "#D67229"
+
+[highlighting.toml]
+string = "#007958"
+number = "#8b0000"
+default = "#ffffff"
+keys = "#D67229"
+equals = "purple"
+
+[highlighting.markdown]
+bold = "darkblue"
+point = "darkgreen"
+italic = "#8b0000"
+default = "brown"
+keys = "#ffc000"
+link = "#8b0000"
+code = "#8b0000"
+heading = "purple"
+
+[keybindings]
+delete = ["Delete", "ctrl", "shift"]
+explorer = ["E", "ctrl"]
+find = ["F", "ctrl"]
+undo = ["Z", "ctrl", "shift"]
+cut = ["X", "ctrl", "shift"]
+evaluate = ["Enter", "shift"]
+copy = ["C", "ctrl", "shift"]
+saveas = ["S", "ctrl", "shift"]
+focusdown = ["ArrowDown", "shift"]
+up = ["ArrowUp", "ctrl", "shift"]
+select = ["A", "ctrl", "shift"]
+save = ["s", "ctrl"]
+focusup = ["ArrowUp", "shift"]
+down = ["ArrowDown", "ctrl", "shift"]
+new = ["Enter", "ctrl", "shift"]
+paste = ["V", "ctrl", "shift"]
+open = ["O", "ctrl"]
+project-new = ["N", "ctrl", "shift"]

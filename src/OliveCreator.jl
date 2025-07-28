@@ -8,14 +8,14 @@ import Olive: build, evalin, Cell, Project, ComponentModifier, getname, build_ba
 import Olive: on_code_evaluate, cell_bind!, get_session_key
 import Base: getindex, delete!, append!
 import Toolips: route!, router_name
-# using ZipFile
+using ZipFile
 
 USER_DIR = "users"
 
 include("users.jl")
 COLUMN_ORDER = String[]
 
-ZIP_DIR::String = ""
+ZIP_DIR::String = "zips"
 
 GUESTN::UInt32 = UInt32(0)
 # Base users
@@ -94,17 +94,30 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
     found = findfirst(user -> user.name == client_name, core.users)
     if ~(isnothing(found))
         user = core.users[found]
+        if typeof(user) != Olive.OliveUser{:creator}
+            data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$client_name/creator/settings.toml", String))
+            core.users[found] = Olive.OliveUser{:olive}(client_name, key, Olive.Environment("olive"), data)
+            user = core.users[found]
+            Olive.init_user(user)
+            user.environment.pwd = USER_DIR * "/$client_name/wd"
+            push!(user.environment.directories, Olive.Directory(user.environment.pwd, dirtype = "pwd"))
+        end
+        if ~(haskey(OliveCreator.KEY_CACHE, key))
+            push!(OliveCreator.KEY_CACHE, key => client_name)
+        else
+            OliveCreator.KEY_CACHE[key] = client_name
+        end
         user.key = key
         return
     end
-    @warn "decompressing user $name"
     return
-    decompress_user_data(name)
+    decompress_user_data(client_name)
     # TODO load client data from their user.toml
-    data = Olive.TOML.parse(read("users/$name/settings.toml", String))
-    new_user = Olive.OliveUser{:creator}(name, key, Environment("creator"), data)
+    data = Olive.TOML.parse(read("users/$client_name/settings.toml", String))
+    new_user = Olive.OliveUser{:olive}(name, key, Olive.Environment("olive"), data)
+    new_user.environment.pwd = "users/$client_name/wd"
     push!(core.users, new_user)
-    push!(KEY_CACHE, session_key => name)
+    push!(KEY_CACHE, key => client_name)
 end
 
 function unload_client!(core::Olive.OliveCore, client_name::String)
@@ -144,6 +157,9 @@ custom_sheet = begin
         "padding" => 1.25percent, "color" => "#562d57", "font-weight" => "bold")
     progress_sty = style("::-webkit-progress-value", "background" => "#D36CB6", "cursor" => "pointer")
     stys["p"]["color"] = "#ffebcd"
+    push!(stys, style("body", "color" => "white"))
+    inp_cell = stys["div.input_cell"]
+    style!(inp_cell, "color" => "#3d3d3d", "background-color" => "#3d3d3d")
     standard_inp = style("div.stdinp", "background-color" => "#1e1e1e", "border-radius" => 4px, "padding" => 1.25percent, 
         "color" => "white", "font-size" => 15pt)
     push!(stys, standard_inp)
@@ -167,7 +183,7 @@ main = route("/") do c::Toolips.AbstractConnection
     if ~(making_session)
         return
     end
-    Olive.make_session(c, key = false, sheet = custom_sheet, icon = creator_heart)
+    Olive.make_session(c, key = false, sheet = custom_sheet)
 end
 
 isguest(name::String) = length(name) > 4 && name[1:5] == "guest"
