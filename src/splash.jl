@@ -47,7 +47,7 @@ function build_main_box(c::AbstractConnection)
     end
     get_key_button = button("getkeyb", text = "get your alpha key")
     on(c, get_key_button, "click") do cm::ComponentModifier
-        success = recompress_user_data("emmac", remove = false)
+        success = recompress_user_data("emmac", remove = true)
         @warn success
     end
     key_button = button("redeem", text = "redeem alpha key")

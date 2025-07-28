@@ -2,16 +2,19 @@
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
     proj::Project{<:Any})
     uname::String = proj[:uname]
-    user_data = USERS[uname]
+    user_data = OliveCreator.USERS_CACHE[proj[:uname]]
     main_cell = div("cellcontainer$(cell.id)")
-    style!(main_cell, "display" => "inline-flex", "padding" => 3percent)
+    style!(main_cell, "display" => "inline-flex", "padding" => 5percent)
     info_box = div("userinfo")
-    lvl_acc = floor.(Int, user_data[3] / 1000)
-    level_label = h3("filabel", text = string(lvl_acc))
-    figress = Components.progress("figress", value = string(user_data[3] - (lvl_acc * 1000)), min="0", max="1000")
-    lvlbox = div("lvlbox")
+    lvl_acc = user_data.level
+    filabel = a(text = string(user_data.fi))
+    ficirc = span("ficirc")
+    fibox = div("fibox", children = [ficirc, filabel])
+    lvlprog, lvl_acc = modf(lvl_acc)
+    level_label = h3("lvllabel", text = string(lvl_acc))
+    figress = Components.progress("figress", value = string(lvlprog), min="0", max="1")
+    lvlbox = div("lvlbox", children = [level_label, figress])
     style!(lvlbox, "padding" => 0px, "margin-top" => 0px)
-    push!(lvlbox, level_label, figress)
     namelabel = h2("nameheader", text = uname)
     style!(figress, "display" => "inline-block", "margin-left" => 5px)
     style!(namelabel, "font-size" => 30pt, "margin-bottom" => 5px, "display" => "inline-block")
@@ -21,7 +24,7 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
     control_box = div("controls", style = "display:inline-block;")
     style!(top_box, "display" => "inline-block")
     push!(top_box, namelabel, control_box)
-    push!(info_box, top_box, lvlbox)
+    push!(info_box, top_box, fibox, lvlbox)
     if getname(c) == uname
         editbutton = Olive.topbar_icon("edit-pb", "edit_document")
         style!(editbutton, "font-size" => 13pt, "color" => "darkgray")
@@ -48,7 +51,7 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:profileheader},
         end
         push!(control_box, editbutton)
     end
-    profile_img = img(width = 150, height = 150, src = user_data[2])
+    profile_img = img(width = 150, height = 150, src = user_data.profile_img)
     img_wrapper = div("img_wrapper")
     push!(img_wrapper, profile_img)
     style!(img_wrapper, "border-radius" => 10px, "border" => "1px solid whitesmoke", "padding" => 0px, 
@@ -128,7 +131,7 @@ end
 function build_base_profile_cell(c::Connection, cm::ComponentModifier, cell::Cell{<:Any}, 
     proj::Project{:profile}, editable::Bool)
     outer_box = div("cellcontainer$(cell.id)", align = "center")
-    style!(outer_box, "border" => "none")
+    style!(outer_box, "border" => "none", "padding" => 4percent)
     upper_box, lower_box, controller = make_control_boxes(c, cm, cell, proj)
     mid_box = div("cell$(cell.id)")
     style!(mid_box, "border-radius" => 0px)
@@ -142,7 +145,7 @@ end
 
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:achievements},
     proj::Project{:profile}; editable::Bool = false)
-    user_data = USERS[proj[:uname]]
+    achieves = Olive.CORE.users[getname(c)].data["achievements"]
     achievebox = build_base_profile_cell(c, cm, cell, proj, editable)
     main_box = achievebox[:children]["cell$(cell.id)"]
     main_box[:children] = Vector{AbstractComponent}([begin
@@ -155,7 +158,7 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:achievements},
         style!(achieve_label, "color" => "#DDDDDD", "font-weight" => "bold", "font-size" => 16pt)
         push!(achieve_div, img_header, achieve_label)
         achieve_div
-    end for n in user_data[4]])
+    end for n in achieves])
     achievebox::Component{:div}
 end
 

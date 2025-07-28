@@ -13,7 +13,12 @@ using ZipFile
 USER_DIR = "users"
 
 include("users.jl")
-COLUMN_ORDER = String[]
+ORM_COLUMN_ORDER = String[]
+
+function set_orm_order!(orm::ToolipsORM.ORM{<:Any})
+    vals = query(Vector{String}, orm, "columns", "users")
+    OliveCreator.ORM_COLUMN_ORDER = [replace(val, "\n" => "") for val in vals]
+end
 
 ZIP_DIR::String = "zips"
 
@@ -177,7 +182,7 @@ custom_sheet = begin
     push!(stys, standard_inp)
     stys["a.tablabel"]["color"] = "#171717"
     stys["div.tabopen"]["background-color"] = "#e77254"
-    style!(stys["div.projectwindow"], "background-color" => "#2e2e2e")
+    style!(stys["div.projectwindow"], "background-color" => "#2e2e2e", "border-radius" => 0px)
     push!(custom_sheet, new_topbars)
     custom_sheet
 end
@@ -220,7 +225,7 @@ function start(ip::IP4 = "127.0.0.1":8000)
         throw("""failed to connect to database server, make sure it is running, firewall is not in the way, and 
             OliveCreator.DB_INFO is set to the proper DB_INFO.""")
     end
-
+    set_orm_order!(OliveCreator.ORM_EXTENSION)
     creator_route = CreatorRoute(Olive.olive_routes)
     creator_route.routes["/"] = main
     Olive.olive_routes = [creator_route]

@@ -63,9 +63,9 @@ mutable struct CreatorUser
     level::Float64
     profile_img::String
     fi::Int64
-    achievements::Vector{Int64}
-    missions::Dict{Int64, Bool}
-    messages::Vector{Pair{String, String}}
+    memlimit::Float64
+    spclimit::Float64
+    projlimit::Int64
 end
 
 mutable struct UserManager
@@ -76,7 +76,7 @@ end
 getindex(um::UserManager, name::String) = begin
     found = findfirst(user::CreatorUser -> (user.name == name), um.cached)
     if ~(isnothing(found))
-        return(um.cached[name])::CreatorUser
+        return(um.cached[found])::CreatorUser
     end
     if ~(isdir(OliveCreator.USER_DIR * "/$name"))
         success = decompress_user_data(name)
@@ -85,12 +85,18 @@ getindex(um::UserManager, name::String) = begin
         end
     end
     user_data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$name/creator/settings.toml", String))
-    x = user_data["messages"]
-    n = length(x)
-    messages = [x[e] => x[e + 1] for e in range(1, n, step = 2)]
     loaded_user = CreatorUser(name, 0.0, user_data["img"], 
-        0, user_data["achievements"], user_data["missions"], 
-        messages)
+        0, 0.0, 0.0, 1)
+    
+    orm = OliveCreator.ORM_EXTENSION
+    user_tablei = query(Int64, orm, "index", "users/name", name)
+    usrinfo = query(Vector{String}, orm, "getrow", "users", user_tablei)
+    colorder = OliveCreator.ORM_COLUMN_ORDER
+    fipos = findfirst(x -> x == "fi", colorder)
+    levelpos = findfirst(x -> x == "level", colorder)
+    loaded_user.fi = parse(Int64, usrinfo[fipos])
+    loaded_user.level = parse(Float64, usrinfo[levelpos])
+    # TODO orm load creator data (memlimit, spclimit, projlimit) from creator table.
     user_data = nothing
     push!(um.cached, loaded_user)
     loaded_user::CreatorUser
