@@ -1,11 +1,11 @@
 function build_login_box(c::AbstractConnection, cm::ComponentModifier)
-    unamelbl = a(text = "username/email: ")
+    unamelbl = a(text = "username/email: ", class = "loginpres")
     unameinput = textdiv("userinp", text = "", class = "stdinp")
     ToolipsSession.bind(c, cm, unameinput, "Enter", prevent_default = true) do cm
         focus!(cm, "pwdinp")
     end
     uname_section = div("-", children = [unamelbl, unameinput])
-    pwdlbl = a(text = "password: ")
+    pwdlbl = a(text = "password: ", class = "loginpres")
     pwdinput = textdiv("pwdinp", text = "", class = "stdinp")
     complete_login = cm -> begin
         provided_pwd = cm["pwdinp"]["text"]
@@ -15,7 +15,7 @@ function build_login_box(c::AbstractConnection, cm::ComponentModifier)
             if "errmsg" in cm
                 set_text!(cm, "errmsg", success)
             else
-                error_a = a("errmsg", text = success)
+                error_a = div("errmsg", text = success)
                 append!(cm, "confsect", error_a)
             end
             return
@@ -30,8 +30,99 @@ function build_login_box(c::AbstractConnection, cm::ComponentModifier)
     confirm_button = button("loginconf", text = "confirm")
     on(complete_login, c, confirm_button, "click")
     confirm_section = div("confsect", children = [confirm_button], align = "right")
+    style!(confirm_section, "margin-top" => .5percent)
     main_box = div("logheader", children = [uname_section, pwd_section, confirm_section], align = "left")
     main_box
+end
+
+function build_setup_account_box(c::AbstractConnection, cm::ComponentModifier, key::String, user_tablei::Int64)
+    unameinput = textdiv("userinp", text = "", class = "stdinp")
+    emailinp = textdiv("emailinp", text = "", class = "stdinp")
+    pwdinput1 = textdiv("passwordinp", text = "", class = "stdinp")
+    pwdinput2 = textdiv("confpwd", text = "", class = "stdinp")
+    style!(pwdinput1, "font-family" => "password")
+    style!(pwdinput2, "font-family" => "password")
+    unamelbl = a(text = "username", class = "loginpres")
+    emaillbl = a(text = "email", class = "loginpres")
+    pwdlbl = a(text = "new password", class = "loginpres")
+    conflbl = a(text = "confirm password", class = "loginpres")
+    confirm_info = cm::ComponentModifier -> begin
+        new_username = cm["userinp"]["text"]
+        new_email = cm["emailinp"]["text"]
+        pwd_1 = cm["passwordinp"]["text"]
+        pwd_2 = cm["confpwd"]["text"]
+        @info new_email
+        @info new_username
+        err = nothing
+        orm = OliveCreator.ORM_EXTENSION
+        user_tablei = query(Int64, orm, "index", "users/name", name)
+        keep_out_of_name = ("|", "$", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "\\", 
+            "/", "]", "[", ".", "\"", ";", ":", "'", "`", "?")
+        found = findfirst(x -> contains(new_username, x), keep_out_of_name)
+        if contains(new_username, " ")
+            new_username = replace(new_username, " " => "_")
+        elseif contains(pwd_1, "!;")
+            err = "password cannot contain `!;`"
+        elseif length(pwd_1) < 6
+            err = "password must be at least 6 characters"
+        elseif user_tablei != 0
+            err = "username taken"
+        elseif ~(isnothing(found))
+            err = "username contains invalid symbols"
+        elseif pwd_1 != pwd_2
+            err = "passwords do not match"
+        end
+        if ~(isnothing(err))
+            if "errmsg" in cm
+                set_text!(cm, "errmsg", err)
+            else
+                error_a = div("errmsg", text = err)
+                append!(cm, "confsect", error_a)
+            end
+            return
+        end
+        create_new_user(c, orm, new_username, new_email, pwd_1)
+        query(String, orm, "set", "creatorkeys/used", user_tablei, true)
+    end
+    confirm_button = button("loginconf", text = "confirm")
+    on(complete_ifno, c, confirm_button, "click")
+    confirm_section = div("confsect", children = [confirm_button], align = "right", 
+        style = "margin-top:.75%;")
+    main_box = div("logheader", children = [unamelbl, unameinput, 
+        emaillbl, emailinp, pwdlbl, pwdinput1, conflbl, pwdinput2, confirm_section], align = "left")
+    main_box
+end
+
+function build_redeem_box(c::AbstractConnection, cm::Toolips.Components.AbstractComponentModifier)
+    akey_lbl = h3(text = "enter alpha key:")
+    keybox = textdiv("keyinp", text = "", class = "stdinp")
+    style!(keybox, "font-family" => "password")
+    process_key = cm::ComponentModifier -> begin
+        provided_key = cm["keyinp"]["text"]
+        if provided_key == ""
+            return
+        end
+        orm = OliveCreator.ORM_EXTENSION
+        user_tablei = query(Int64, orm, "index", "creatorkeys/keys", provided_key)
+        if user_tablei == 0
+            # TODO invalid key error message
+            return
+        end
+        used_key = query(Bool, orm, "get", "creatorkeys/used", user_tablei)
+        @info used_key
+        if used_key
+            # TODO used key error message
+            return
+        end
+        login_box = build_setup_account_box(c, cm, provided_key, user_tablei)
+        remove!(cm, "logheader")
+        set_children!(cm, "mainbox", [login_box])
+    end
+    ToolipsSession.bind(process_key, c, cm, keybox, "Enter", prevent_default = true)
+    confirm_button = button("loginconf", text = "confirm")
+    on(process_key, c, confirm_button, "click")
+    confirm_section = div("confsect", children = [confirm_button], align = "right")
+    main_box = div("logheader", children = [akey_lbl, keybox, confirm_section], align = "left")
 end
 
 function build_main_box(c::AbstractConnection)
@@ -47,17 +138,17 @@ function build_main_box(c::AbstractConnection)
     end
     get_key_button = button("getkeyb", text = "get your alpha key")
     on(c, get_key_button, "click") do cm::ComponentModifier
-        success = recompress_user_data("emmac", remove = true)
-        @warn success
+
     end
     key_button = button("redeem", text = "redeem alpha key")
     on(c, key_button, "click") do cm::ComponentModifier
-        success = decompress_user_data("emmac")
-        @warn success
+        remove!(cm, "logheader")
+        login_box = build_redeem_box(c, cm)
+        insert!(cm, "mainbox", 1, login_box)
     end
     guest_button = button("guestb", text = "enter as guest")
     on(c, guest_button, "click") do cm::ComponentModifier
-
+        
     end
     box = div("mainbox", children = [open_alphal, login_button, key_button, get_key_button, guest_button])
     style!(box, "position" => "absolute", "padding" => 3percent, "width" => 40percent, "top" => 35percent, "left" => 27percent, 

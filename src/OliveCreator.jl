@@ -95,6 +95,15 @@ function login_user(c::AbstractConnection, orm::ToolipsORM.ORM,
     nothing::Nothing
 end
 
+function create_new_user(c::AbstractConnection, orm::ToolipsORM.ORM, 
+    name::String, email::String, pwd::String)
+    data = Dict("name" => name, "mail" => email, "fi" => 0, "level" => 0, 
+        "password" => pwd, "confirmed" => false)
+    args = [data[key] for key in ORM_COLUMN_ORDER]
+    query(String, orm, "store", "users", args)
+    
+end
+
 function load_client!(core::Olive.OliveCore, client_name::String, key::String)
     found = findfirst(user -> user.name == client_name, core.users)
     found_value = ~(isnothing(found))
@@ -156,6 +165,8 @@ end
 custom_sheet = begin 
     custom_sheet = Olive.olivesheet()
     stys = custom_sheet[:children]
+    push!(stys, Style("a.loginpres", "color" => "#ffefdb", "font-size" => 16pt, 
+    "margin-top" => .5percent))
     push!(stys, Style("@font-face", "font-family" => "'password'", "src" => "url('/assets/password.ttf') format('truetype')", 
     "font-weight" => "normal", "font-style" => "normal"))
     delete!(stys, "div.topbar")
