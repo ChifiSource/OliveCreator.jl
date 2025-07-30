@@ -1,0 +1,76 @@
+img = "/assets/profile_default.png"
+achievements = []
+messages = []
+recents = []
+group = "users"
+[missions]
+0 = false
+[creatorkeys]
+v = "markdown"
+c = "code"
+m = "module"
+"/" = "helprepl"
+";" = "shellrepl"
+"]" = "pkgrepl"
+i = "include"
+
+[highlighting.julia]
+string = "#44fd8b"
+number = "#ff4747"
+using = "#42d7cf"
+func = "#ff61b8"
+for = "#e7ffa3"
+struct = "#fc038c"
+funcn = "#c7cdff"
+mutable = "#006C67"
+in = "#64f7ef"
+import = "#ff8fcd"
+op = "#dca6dd"
+comment = "#e9ead1"
+default = "#ffffff"
+if = "#ff61b8"
+module = "#ffa3b6"
+end = "#ae57d6"
+begin = "#fc038c"
+exit = "#cc0099"
+interp = "#ccf7ff"
+char = "#bd5dd0"
+abstract = "#6cd5d0"
+type = "#ffaf75"
+
+[highlighting.toml]
+string = "#29f5be"
+number = "#f05656"
+default = "#ffffff"
+keys = "#D67229"
+equals = "#d477d1"
+
+[highlighting.markdown]
+bold = "#da8349"
+point = "#df7cdc"
+italic = "#5cdb6b"
+default = "#ffead6"
+keys = "#ffc000"
+link = "#8cadd9"
+code = "#dd6464"
+heading = "#adb3ff"
+
+[keybindings]
+delete = ["Delete", "ctrl", "shift"]
+explorer = ["E", "ctrl"]
+find = ["F", "ctrl"]
+undo = ["Z", "ctrl", "shift"]
+cut = ["X", "ctrl", "shift"]
+evaluate = ["Enter", "shift"]
+copy = ["C", "ctrl", "shift"]
+saveas = ["S", "ctrl", "shift"]
+focusdown = ["ArrowDown", "shift"]
+up = ["ArrowUp", "ctrl", "shift"]
+select = ["A", "ctrl", "shift"]
+save = ["s", "ctrl"]
+focusup = ["ArrowUp", "shift"]
+down = ["ArrowDown", "ctrl", "shift"]
+new = ["Enter", "ctrl", "shift"]
+paste = ["V", "ctrl", "shift"]
+open = ["O", "ctrl"]
+project-new = ["N", "ctrl", "shift"]

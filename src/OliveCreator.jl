@@ -101,7 +101,28 @@ function create_new_user(c::AbstractConnection, orm::ToolipsORM.ORM,
         "password" => pwd, "confirmed" => false)
     args = [data[key] for key in ORM_COLUMN_ORDER]
     query(String, orm, "store", "users", args)
-    
+    create_default_userdata(c, name)
+    recompress_user_data(name, remove = false)
+end
+
+function create_default_userdata(c::AbstractConnection, name::String)
+    base_userdir = OliveCreator.USER_DIR * "/$name"
+    mkdir(base_userdir)
+    mkdir(base_userdir * "/profile")
+    mkdir(base_userdir * "/wd")
+    mkdir(base_userdir * "/creator")
+    cp("olive/default_settings.toml", base_userdir * "/creator/settings.toml")
+    profdir = base_userdir * "/profile/profile.jl"
+    touch(profdir)
+    open(profdir, "w") do o::IO
+        write(o, 
+        """welcome to my new profile!
+#==output[blurb]
+false
+
+
+==#""")
+    end
 end
 
 function load_client!(core::Olive.OliveCore, client_name::String, key::String)
@@ -138,11 +159,11 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
         return
     end
     decompress_user_data(client_name)
-    # TODO load client data from their user.toml
-    data = Olive.TOML.parse(read("users/$client_name/settings.toml", String))
-    new_user = Olive.OliveUser{:olive}(name, key, Olive.Environment("olive"), data)
+    data = Olive.TOML.parse(read("users/$client_name/creator/settings.toml", String))
+    new_user = Olive.OliveUser{:olive}(client_name, key, Olive.Environment("olive"), data)
     new_user.environment.pwd = "users/$client_name/wd"
     push!(core.users, new_user)
+    Olive.init_user(new_user)
     push!(KEY_CACHE, key => client_name)
 end
 

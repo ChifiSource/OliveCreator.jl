@@ -35,7 +35,7 @@ function build_login_box(c::AbstractConnection, cm::ComponentModifier)
     main_box
 end
 
-function build_setup_account_box(c::AbstractConnection, cm::ComponentModifier, key::String, user_tablei::Int64)
+function build_setup_account_box(c::AbstractConnection, cm::ComponentModifier, key::String, key_tablei::Int64)
     unameinput = textdiv("userinp", text = "", class = "stdinp")
     emailinp = textdiv("emailinp", text = "", class = "stdinp")
     pwdinput1 = textdiv("passwordinp", text = "", class = "stdinp")
@@ -55,8 +55,9 @@ function build_setup_account_box(c::AbstractConnection, cm::ComponentModifier, k
         @info new_username
         err = nothing
         orm = OliveCreator.ORM_EXTENSION
-        user_tablei = query(Int64, orm, "index", "users/name", name)
-        keep_out_of_name = ("|", "$", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "\\", 
+        user_tablei = query(Int64, orm, "index", "users/name", new_username)
+        maili = query(Int64, orm, "index", "users/mail", new_email)
+        keep_out_of_name = ("|", "\$", "!", "@", "#", "%", "^", "&", "*", "(", ")", "\\", 
             "/", "]", "[", ".", "\"", ";", ":", "'", "`", "?")
         found = findfirst(x -> contains(new_username, x), keep_out_of_name)
         if contains(new_username, " ")
@@ -71,6 +72,8 @@ function build_setup_account_box(c::AbstractConnection, cm::ComponentModifier, k
             err = "username contains invalid symbols"
         elseif pwd_1 != pwd_2
             err = "passwords do not match"
+        elseif maili != 0
+            err = "email taken"
         end
         if ~(isnothing(err))
             if "errmsg" in cm
@@ -82,10 +85,12 @@ function build_setup_account_box(c::AbstractConnection, cm::ComponentModifier, k
             return
         end
         create_new_user(c, orm, new_username, new_email, pwd_1)
-        query(String, orm, "set", "creatorkeys/used", user_tablei, true)
+        query(String, orm, "set", "creatorkeys/used", key_tablei, true)
+        load_client!(Olive.CORE, new_username, get_session_key(c))
+        redirect!(cm, "/")
     end
     confirm_button = button("loginconf", text = "confirm")
-    on(complete_ifno, c, confirm_button, "click")
+    on(confirm_info, c, confirm_button, "click")
     confirm_section = div("confsect", children = [confirm_button], align = "right", 
         style = "margin-top:.75%;")
     main_box = div("logheader", children = [unamelbl, unameinput, 

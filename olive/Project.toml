@@ -1,30 +1,29 @@
+home = "./olive"
+root = "emmac"
+wd = "/home/emmac/dev/packages/olive/OliveCreator.jl"
 name = "olive"
+defaultgroup = "all"
+version = "0.1.0"
 uuid = "c1a59971-6f4d-46be-b520-66df1589e441"
 authors = ["emmac "]
-version = "0.1.0"
-
-[deps]
-Gattino = "f0fb3ee5-f608-41f3-a42d-dac276373afc"
-Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-Olive = "724ecaf6-c7a0-4c22-b37e-0bb7b4193da8"
 
 [groups.root]
 cells = ["code", "markdown"]
 dirs = ["home"]
-load = ["olivebase"]
 uris = ["./olive"]
+load = ["olivebase"]
 
 [groups.users]
 cells = ["code", "markdown"]
 dirs = []
-load = ["olivebase"]
 uris = []
+load = ["olivebase"]
 
 [groups.guest]
 cells = ["code", "markdown"]
 dirs = []
-load = ["olivebase"]
 uris = []
+load = ["olivebase"]
 
 [olive]
 home = "./olive"
@@ -97,8 +96,8 @@ group = "guest"
     find = ["F", "ctrl"]
     undo = ["Z", "ctrl", "shift"]
     cut = ["X", "ctrl", "shift"]
-    evaluate = ["Enter", "shift"]
     copy = ["C", "ctrl", "shift"]
+    evaluate = ["Enter", "shift"]
     saveas = ["S", "ctrl", "shift"]
     focusdown = ["ArrowDown", "shift"]
     up = ["ArrowUp", "ctrl", "shift"]
@@ -113,9 +112,9 @@ group = "guest"
 
 [oliveusers.emmac]
 messages = ["global", "hello world"]
-recents = ["./olive/src/olive.jl", "./olive/home/users/emmac/profile/profile.jl", "/home/emmac/dev/packages/olive/OliveCreator.jl/dev.jl", "users/emmac/wd/testfile.jl", "users/README.md"]
+recents = ["./olive/src/olive.jl", "./olive/home/users/emmac/profile/profile.jl", "/home/emmac/dev/packages/olive/OliveCreator.jl/dev.jl"]
 img = ""
-achievements = [0]
+achievements = []
 group = "root"
 
     [oliveusers.emmac.missions]
@@ -131,45 +130,45 @@ group = "root"
     i = "include"
 
     [oliveusers.emmac.highlighting.julia]
-    string = "#007958"
-    number = "#8b0000"
-    using = "#006C67"
-    func = "#fc038c"
-    for = "#fc038c"
+    string = "#44fd8b"
+    number = "#ff4747"
+    using = "#42d7cf"
+    func = "#ff61b8"
+    for = "#e7ffa3"
     struct = "#fc038c"
-    funcn = "#2F387B"
+    funcn = "#c7cdff"
     mutable = "#006C67"
-    in = "#006C67"
-    import = "#fc038c"
-    op = "#0C023E"
-    comment = "#808080"
+    in = "#64f7ef"
+    import = "#ff8fcd"
+    op = "#dca6dd"
+    comment = "#e9ead1"
     default = "#ffffff"
-    if = "#fc038c"
-    module = "#b81870"
-    end = "#b81870"
+    if = "#ff61b8"
+    module = "#ffa3b6"
+    end = "#ae57d6"
     begin = "#fc038c"
     exit = "#cc0099"
-    interp = "#420000"
-    char = "#8b0000"
-    abstract = "#006C67"
-    type = "#D67229"
+    interp = "#ccf7ff"
+    char = "#bd5dd0"
+    abstract = "#6cd5d0"
+    type = "#ffaf75"
 
     [oliveusers.emmac.highlighting.toml]
-    string = "#007958"
-    number = "#8b0000"
+    string = "#29f5be"
+    number = "#f05656"
     default = "#ffffff"
     keys = "#D67229"
-    equals = "purple"
+    equals = "#d477d1"
 
     [oliveusers.emmac.highlighting.markdown]
-    bold = "darkblue"
-    point = "darkgreen"
-    italic = "#8b0000"
-    default = "brown"
+    bold = "#da8349"
+    point = "#df7cdc"
+    italic = "#5cdb6b"
+    default = "#ffead6"
     keys = "#ffc000"
-    link = "#8b0000"
-    code = "#8b0000"
-    heading = "purple"
+    link = "#8cadd9"
+    code = "#dd6464"
+    heading = "#adb3ff"
 
     [oliveusers.emmac.keybindings]
     delete = ["Delete", "ctrl", "shift"]
@@ -190,3 +189,8 @@ group = "root"
     paste = ["V", "ctrl", "shift"]
     open = ["O", "ctrl"]
     project-new = ["N", "ctrl", "shift"]
+
+[deps]
+Gattino = "f0fb3ee5-f608-41f3-a42d-dac276373afc"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Olive = "724ecaf6-c7a0-4c22-b37e-0bb7b4193da8"
