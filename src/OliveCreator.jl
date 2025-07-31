@@ -41,42 +41,87 @@ end
 
 route!(c::AbstractConnection, routes::Vector{<:CreatorCentralRoute}) = begin
     targeted_path::String = get_route(c)
-    if length(targeted_path) > 1
+    if targeted_path != "/" && targeted_path in routes[1].routes
+        route!(c, routes[1].routes)
+        return
+    end
+    served_splash = creator_auth(c, targeted_path)
+    if served_splash
+        return
+    end
+    n = length(targeted_path)
+    user = Olive.CORE.users[getname(c)]
+    is_a_guest = isguest(user)
+    if targeted_path == "/"
+        if environment_empty(user)
+            if is_a_guest
+                load_guest_environment!(user)
+            else
+                load_feed_environment!(user)
+            end
+        end
+        Olive.make_session(c, key = false, sheet = custom_sheet, settings_enabled = false)
+    end
+    if ~(is_a_guest)
+        load_user_directories!(user)
+    else
+        load_guest_directories!(user)
+    end
+    if n > 2
+
         if targeted_path[1:2] == "/@"
             generate_profile(c, targeted_path[3:end])
             return
         end
     end
-    if targeted_path in routes[1].routes
-        route!(c, routes[1].routes)
-        return
-    end
 end
 
-function creator_auth(c::Toolips.AbstractConnection)::Bool
+function add_as_guest(c::AbstractConnection)
+    session_key = Olive.get_session_key(c)
+    new_data = Olive.TOML.parse(read("olive/default_settings.toml", String))
+    new_data["group"] = "guest"
+    newuser = Olive.OliveUser{:olive}("guest$(OliveCreator.GUESTN)", session_key, Olive.Environment("olive"), new_data)
+    Olive.init_user(newuser)
+    OliveCreator.GUESTN += 1
+    push!(Olive.CORE.users, newuser)
+end
+
+environment_empty(user::Olive.OliveUser) = length(user.environment.projects) == 0 && length(user.environment.directories) == 0
+
+function load_guest_environment!(user::Olive.OliveUser)
+
+end
+
+function load_guest_directories!(user::Olive.OliveUser)
+
+end
+
+function load_user_directories!(user::Olive.OliveUser)
+
+end
+
+function load_feed_environment!(user::Olive.OliveUser)
+    load_user_directories!(user)
+end
+
+function creator_auth(c::Toolips.AbstractConnection, targeted_path::String = "/")::Bool
     CORE = Olive.CORE
-    args = get_args(c)
     session_key = Olive.get_session_key(c)
     user_index = findfirst(usr -> usr.key == session_key, CORE.users)
     in_users = ~(isnothing(user_index))
     if in_users
-        return(true)
+        return(false)
     elseif haskey(KEY_CACHE, session_key)
        load_client!(olive.CORE, KEY_CACHE[session_key], session_key)
-       return(true)
-    elseif get_route(c) == "/"
+       return(false)
+    elseif targeted_path == "/"
         splash_cop = copy(SPLASH)
         push!(splash_cop, build_main_box(c))
         write!(c, splash_cop)
-        return(false)
-    else
-        session_key = Olive.get_session_key(c)
-        new_data = Dict{String, Any}("group" => "guest")
-        newuser = Olive.OliveUser{:guest}("guest$(OliveCreator.GUESTN)", session_key, Olive.Environment("guest"), new_data)
-        Olive.init_user(newuser)
-        OliveCreator.GUESTN += 1
-        push!(Olive.CORE.users, newuser)
         return(true)
+    else
+        add_as_guest(c)
+        return(false)
     end
 end
 
@@ -242,7 +287,8 @@ main = route("/") do c::Toolips.AbstractConnection
     Olive.make_session(c, key = false, sheet = custom_sheet)
 end
 
-isguest(name::String) = length(name) > 4 && name[1:5] == "guest"
+isguest(user::Olive.OliveUser) = user["group"] == "guest"
+isguest(name::String) = Olive.CORE.users[name]["group"] == "guest"
 
 build(c::Connection, cm::ComponentModifier, oe::Olive.OliveExtension{:creator}) = begin
  #   progress_sty = style("::-webkit-progress-value", "background" => "#D36CB6")
@@ -255,7 +301,7 @@ include("profiles.jl")
 include("splash.jl")
 include("limiter.jl")
 
-function start(ip::IP4 = "127.0.0.1":8000)
+function start(ip::IP4 = "127.0.0.1":8000, threads::Int64 = 1)
     OliveCreator.SPLASH = build_splash()
     OliveCreator.ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...)
     orm = OliveCreator.ORM_EXTENSION
@@ -277,7 +323,7 @@ function start(ip::IP4 = "127.0.0.1":8000)
     Olive.SES.invert_active = true
     Olive.SES.active_routes = vcat(["/MaterialIcons.otf", "/favicon.ico"], [r.path for r in assets])
     EVENTS = copy(Olive.SES.events)
-    Olive.start(ip, path = ".")
+    Olive.start(ip, path = ".", user_threads = 1, threads = threads)
     SES.events = EVENTS
     nothing
 end

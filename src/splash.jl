@@ -88,6 +88,7 @@ function build_setup_account_box(c::AbstractConnection, cm::ComponentModifier, k
         end
         create_new_user(c, orm, new_username, new_email, pwd_1)
         query(String, orm, "set", "creatorkeys/used", key_tablei, true)
+        OliveCreator.ALL_KEYS[key_tablei] = true
         load_client!(Olive.CORE, new_username, get_session_key(c))
         redirect!(cm, "/")
     end
@@ -116,7 +117,6 @@ function build_redeem_box(c::AbstractConnection, cm::Toolips.Components.Abstract
             return
         end
         used_key = query(Bool, orm, "get", "creatorkeys/used", user_tablei)
-        @info used_key
         if used_key
             # TODO used key error message
             return
@@ -126,7 +126,7 @@ function build_redeem_box(c::AbstractConnection, cm::Toolips.Components.Abstract
         set_children!(cm, "mainbox", [login_box])
     end
     ToolipsSession.bind(process_key, c, cm, keybox, "Enter", prevent_default = true)
-    confirm_button = button("loginconf", text = "use alpha key")
+    confirm_button = button("loginconf", text = "claim this key")
     style!(confirm_button, "animation-name" => "banim", "animation-duration" => 5seconds, "animation-iteration-count" => "infinite")
     on(process_key, c, confirm_button, "click")
     confirm_section = div("confsect", children = [confirm_button], align = "right")
@@ -163,6 +163,20 @@ function build_getkey_box(c::AbstractConnection)
     main_box
 end
 
+function build_guestbox(c::AbstractConnection)
+    header = h3(text = "continue as guest")
+    info = p(text = "Guests may freely browse OliveCreator, but will have no access to evaluation or storage.")
+    confirm_button = button("loginconf", text = "continue as guest")
+    on(c, confirm_button, "click") do cm::ComponentModifier
+        add_as_guest(c)
+        redirect!(cm, "/")
+    end
+    confirm_section = div("confsect", children = [confirm_button], align = "center")
+    style!(confirm_section, "margin-bottom" => 2percent, "margin-top" => 1percent)
+    main_box = div("logheader", children = [header, info, confirm_section], align = "left")
+    main_box
+end
+
 function build_main_box(c::AbstractConnection)
     open_alphal = tmd("logheader", """##### welcome to creator closed alpha
         Due to hardware limitations, olive creator is starting small with a **closed** alpha. This project plans to eventually open its doors to the broader public.
@@ -188,7 +202,9 @@ function build_main_box(c::AbstractConnection)
     end
     guest_button = button("guestb", text = "enter as guest")
     on(c, guest_button, "click") do cm::ComponentModifier
-        
+        guestbox = build_guestbox(c)
+        remove!(cm, "logheader")
+        insert!(cm, "mainbox", 1, guestbox)
     end
     box = div("mainbox", children = [open_alphal, login_button, key_button, get_key_button, guest_button])
     style!(box, "position" => "absolute", "padding" => 3percent, "width" => 40percent, "top" => 35percent, "left" => 27percent, 
