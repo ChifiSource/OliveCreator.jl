@@ -10,26 +10,24 @@ import Base: getindex, delete!, append!
 import Toolips: route!, router_name
 using ZipFile
 
+# globals
+DB_INFO = ("":8000, "name", "pwd", "key")
+ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...)
 USER_DIR = "users"
+KEY_CACHE = Dict{String, String}()
+ORM_COLUMN_ORDER = String[]
+ALPHA_KEYS = Bool[]
+ZIP_DIR::String = "zips"
+GUESTN::UInt32 = UInt32(0)
 
 include("users.jl")
-ORM_COLUMN_ORDER = String[]
 
 function set_orm_order!(orm::ToolipsORM.ORM{<:Any})
     vals = query(Vector{String}, orm, "columns", "users")
     OliveCreator.ORM_COLUMN_ORDER = [replace(val, "\n" => "") for val in vals]
 end
 
-ZIP_DIR::String = "zips"
-
-GUESTN::UInt32 = UInt32(0)
-# Base users
-DB_INFO = ("":8000, "name", "pwd", "key")
-
-KEY_CACHE = Dict{String, String}()
-
-
-ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...)
+# routing and auth
 
 abstract type CreatorCentralRoute <: Toolips.AbstractHTTPRoute end
 
@@ -121,7 +119,8 @@ function create_default_userdata(c::AbstractConnection, name::String)
 false
 
 
-==#""")
+==#
+#==|||==#""")
     end
 end
 
@@ -199,6 +198,14 @@ custom_sheet = begin
     stys[".material-icons"]["color"] = "#171717"
     push!(stys, buttons[:extras] ...)
     delete!(buttons.properties, :extras)
+    banim = keyframes("banim")
+     keyframes!(banim, 0percent, "color" => "#7bd63e", "background-color" => "707eb8")
+    keyframes!(banim, 20percent, "color" => "#4f73c9", "background-color" => "#80ffa2")
+    keyframes!(banim, 40percent, "color" => "#d6943e", "background-color" => "#bc6ec2")
+    keyframes!(banim, 60percent, "color" => "#d6553e", "background-color" => "#cfd63e")
+    keyframes!(banim, 80percent, "color" => "#833ed6", "background-color" => "#3ed6b0")
+    keyframes!(banim, 100percent, "color" => "#7bd63e", "background-color" => "#707eb8")
+    push!(stys, banim)
     new_topbars = style("div.topbar", 
         "border-radius" => "5px", "background-color" => "#f197b0", "transition" => 500ms)
     stys["body"]["background-color"] = "#171717"
@@ -251,13 +258,16 @@ include("limiter.jl")
 function start(ip::IP4 = "127.0.0.1":8000)
     OliveCreator.SPLASH = build_splash()
     OliveCreator.ORM_EXTENSION = ToolipsORM.ORM(ToolipsORM.ChiDBDriver, DB_INFO[1], DB_INFO[2:end] ...)
+    orm = OliveCreator.ORM_EXTENSION
     try
-        connect!(OliveCreator.ORM_EXTENSION)
+        connect!(orm)
     catch
         throw("""failed to connect to database server, make sure it is running, firewall is not in the way, and 
             OliveCreator.DB_INFO is set to the proper DB_INFO.""")
     end
-    set_orm_order!(OliveCreator.ORM_EXTENSION)
+    set_orm_order!(orm)
+    OliveCreator.ALPHA_KEYS = query(Vector{Bool}, OliveCreator.ORM_EXTENSION, "get", "creatorkeys/used")
+    @warn OliveCreator.ALPHA_KEYS
     creator_route = CreatorRoute(Olive.olive_routes)
     creator_route.routes["/"] = main
     Olive.olive_routes = [creator_route]

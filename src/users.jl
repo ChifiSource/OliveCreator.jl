@@ -9,7 +9,6 @@ function decompress_user_data(name::String)
     zip_reader = ZipFile.Reader(zip_uri)
     for file in zip_reader.files
         fname = file.name
-        @warn file.name
         dirs = split(replace(fname, OliveCreator.USER_DIR => ""), "/")
         if length(dirs) > 2
             current_dir = user_directory
