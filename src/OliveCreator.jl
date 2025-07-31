@@ -97,11 +97,16 @@ function load_guest_directories!(user::Olive.OliveUser)
 end
 
 function load_user_directories!(user::Olive.OliveUser)
-
+    creator_dir = Olive.Directory("users/$(user.name)/wd", dirtype = "creatorcloud")
+    push!(user.environment.directories, creator_dir)
 end
 
 function load_feed_environment!(user::Olive.OliveUser)
+    feedproj = Olive.Project{:feed}("feed")
+    feedproj.data[:cells] = [Cell{:newpost}(), Cell{:feed}()]
+    push!(user.environment.projects, feedproj)
     load_user_directories!(user)
+    nothing::Nothing
 end
 
 function creator_auth(c::Toolips.AbstractConnection, targeted_path::String = "/")::Bool
@@ -175,13 +180,12 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
     found_dir = client_name in readdir(OliveCreator.USER_DIR)
     if found_value && found_dir
         user = core.users[found]
-        if typeof(user) != Olive.OliveUser{:creator}
+        if ~(haskey(user.data, "achievements"))
             data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$client_name/creator/settings.toml", String))
             core.users[found] = Olive.OliveUser{:olive}(client_name, key, Olive.Environment("olive"), data)
             user = core.users[found]
             Olive.init_user(user)
             user.environment.pwd = USER_DIR * "/$client_name/wd"
-            push!(user.environment.directories, Olive.Directory(user.environment.pwd, dirtype = "pwd"))
         end
         if ~(haskey(OliveCreator.KEY_CACHE, key))
             push!(OliveCreator.KEY_CACHE, key => client_name)
@@ -190,25 +194,18 @@ function load_client!(core::Olive.OliveCore, client_name::String, key::String)
         end
         user.key = key
         return
-    elseif found_value
-        decompress_user_data(client_name)
-        if typeof(user) != Olive.OliveUser{:creator}
-            data = Olive.TOML.parse(read(OliveCreator.USER_DIR * "/$client_name/creator/settings.toml", String))
-            core.users[found] = Olive.OliveUser{:olive}(client_name, key, Olive.Environment("olive"), data)
-            user = core.users[found]
-            Olive.init_user(user)
-            user.environment.pwd = USER_DIR * "/$client_name/wd"
-            push!(user.environment.directories, Olive.Directory(user.environment.pwd, dirtype = "pwd"))
-        end
-        return
     end
     decompress_user_data(client_name)
+    if found_value
+        return
+    end
     data = Olive.TOML.parse(read("users/$client_name/creator/settings.toml", String))
     new_user = Olive.OliveUser{:olive}(client_name, key, Olive.Environment("olive"), data)
     new_user.environment.pwd = "users/$client_name/wd"
     push!(core.users, new_user)
     Olive.init_user(new_user)
     push!(KEY_CACHE, key => client_name)
+    nothing::Nothing
 end
 
 function unload_client!(core::Olive.OliveCore, client_name::String)

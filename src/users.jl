@@ -27,6 +27,10 @@ function decompress_user_data(name::String)
         end
     end
     close(zip_reader)
+    wdpath = user_directory * "/wd"
+    if ~(isdir(wdpath))
+        mkdir(wdpath)
+    end
     true
 end
 
