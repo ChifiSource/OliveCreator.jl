@@ -3,9 +3,10 @@ using Olive
 using Olive.Toolips
 using Olive.Toolips.Components
 using Olive.ToolipsSession
+using Olive.OliveHighlighters
 using ToolipsORM
 import Olive: build, evalin, Cell, Project, ComponentModifier, getname, build_base_cell, olive_notify!, OliveExtension
-import Olive: on_code_evaluate, cell_bind!, get_session_key
+import Olive: on_code_evaluate, cell_bind!, get_session_key, cell_highlight!
 import Base: getindex, delete!, append!
 import Toolips: route!, router_name
 using ZipFile
@@ -21,7 +22,7 @@ ZIP_DIR::String = "zips"
 GUESTN::UInt32 = UInt32(0)
 
 include("users.jl")
-
+include("oliveposts.jl")
 function set_orm_order!(orm::ToolipsORM.ORM{<:Any})
     vals = query(Vector{String}, orm, "columns", "users")
     OliveCreator.ORM_COLUMN_ORDER = [replace(val, "\n" => "") for val in vals]
@@ -49,29 +50,40 @@ route!(c::AbstractConnection, routes::Vector{<:CreatorCentralRoute}) = begin
     if served_splash
         return
     end
-    n = length(targeted_path)
     user = Olive.CORE.users[getname(c)]
     is_a_guest = isguest(user)
     if targeted_path == "/"
-        if environment_empty(user)
-            if is_a_guest
-                load_guest_environment!(user)
-            else
-                load_feed_environment!(user)
-            end
-        end
+        perform_envcheck(user, is_a_guest)
         Olive.make_session(c, key = false, sheet = custom_sheet, settings_enabled = false)
+        return
     end
-    if ~(is_a_guest)
-        load_user_directories!(user)
-    else
-        load_guest_directories!(user)
-    end
-    if n > 2
-
+    n = length(targeted_path)
+    if n > 3
         if targeted_path[1:2] == "/@"
             generate_profile(c, targeted_path[3:end])
-            return
+            # load_profile_project(user, targeted_path[3:end])
+        end
+    end
+    if contains(targeted_path, "/user-content/") && targeted_path[1:14] == "/user-content/"
+        serve_user_content(user, replace(targeted_path, "/user-content/" => ""))
+    end
+    perform_envcheck(user, is_a_guest)
+    Olive.make_session(c, key = false, sheet = custom_sheet, settings_enabled = false)
+end
+
+function perform_envcheck(user::Olive.OliveUser, is_a_guest::Bool)
+    nodirs = length(user.environment.directories) == 0
+    if environment_empty(user)
+        if is_a_guest
+            load_guest_environment!(user)
+        else
+            load_feed_environment!(user)
+        end
+    elseif nodirs
+        if is_a_guest
+            load_guest_directories!(user)
+        else
+            load_user_directories!(user)
         end
     end
 end
@@ -276,14 +288,6 @@ creator_heart = begin
     creator_heart = svg("olive-loader", width = 500, height = 500, children = [heart_path])
 end
 
-main = route("/") do c::Toolips.AbstractConnection
-    making_session = creator_auth(c)
-    if ~(making_session)
-        return
-    end
-    Olive.make_session(c, key = false, sheet = custom_sheet)
-end
-
 isguest(user::Olive.OliveUser) = user["group"] == "guest"
 isguest(name::String) = Olive.CORE.users[name]["group"] == "guest"
 
@@ -310,9 +314,8 @@ function start(ip::IP4 = "127.0.0.1":8000, threads::Int64 = 1)
     end
     set_orm_order!(orm)
     OliveCreator.ALPHA_KEYS = query(Vector{Bool}, OliveCreator.ORM_EXTENSION, "get", "creatorkeys/used")
-    @warn OliveCreator.ALPHA_KEYS
     creator_route = CreatorRoute(Olive.olive_routes)
-    creator_route.routes["/"] = main
+    delete!(creator_route.routes, "/")
     Olive.olive_routes = [creator_route]
     push!(creator_route.routes, Olive.key_route)
     assets = mount("/assets" => "creator_assets")
