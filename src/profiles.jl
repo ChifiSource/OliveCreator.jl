@@ -213,7 +213,6 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:creator},
 end
 
 function generate_profile(c::Toolips.AbstractConnection, user::AbstractString)
-    creator_auth(c)
     name = Olive.getname(c)
     read_in_cells = Olive.IPyCells.read_jl("users/$user/profile/profile.jl")
     project_data = Dict{Symbol, Any}(:cells => Vector{Olive.Cell}([
@@ -224,7 +223,7 @@ function generate_profile(c::Toolips.AbstractConnection, user::AbstractString)
         Olive.make_session(c, key = false, themes_enabled = false, sheet = custom_sheet,
             settings_enabled = false)
     else
-        Olive.make_session(c, key = false, sheet = custom_sheet,
+        Olive.make_session(c, key = true, sheet = custom_sheet,
             settings_enabled = false)
     end
 end

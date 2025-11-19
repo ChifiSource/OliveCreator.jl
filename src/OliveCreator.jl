@@ -5,6 +5,7 @@ using Olive.Toolips.Components
 using Olive.ToolipsSession
 using Olive.OliveHighlighters
 using ToolipsORM
+using Olive: topbar_icon
 import Olive: build, evalin, Cell, Project, ComponentModifier, getname, build_base_cell, olive_notify!, OliveExtension
 import Olive: on_code_evaluate, cell_bind!, get_session_key, cell_highlight!
 import Base: getindex, delete!, append!
@@ -62,6 +63,7 @@ route!(c::AbstractConnection, routes::Vector{<:CreatorCentralRoute}) = begin
         if targeted_path[1:2] == "/@"
             generate_profile(c, targeted_path[3:end])
             # load_profile_project(user, targeted_path[3:end])
+            return
         end
     end
     if contains(targeted_path, "/user-content/") && targeted_path[1:14] == "/user-content/"
@@ -291,16 +293,9 @@ end
 isguest(user::Olive.OliveUser) = user["group"] == "guest"
 isguest(name::String) = Olive.CORE.users[name]["group"] == "guest"
 
-build(c::Connection, cm::ComponentModifier, oe::Olive.OliveExtension{:creator}) = begin
- #   progress_sty = style("::-webkit-progress-value", "background" => "#D36CB6")
-  #  remove!(cm, "::-webkit-progress-value")
-  #  append!(cm, "olivestyle", progress_sty)
-  olive_notify!(cm, "hi")
-end
-
 include("profiles.jl")
 include("splash.jl")
-include("limiter.jl")
+include("creatorbase.jl")
 
 function start(ip::IP4 = "127.0.0.1":8000, threads::Int64 = 1)
     OliveCreator.SPLASH = build_splash()
