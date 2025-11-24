@@ -24,10 +24,21 @@ function build(c::Connection, om::ComponentModifier, oe::OliveExtension{:creator
     style!(progress_label1, a_styles ...)
     style!(progress_label2, a_styles ...)
     memory_box::Component{:div} = div("memcontainer", children = [progress_bar, progress_label1, progress_label2])
-    style!(memory_box, "display" => "inline-block") #<- important
+    style!(memory_box, "display" => "inline-block", "margin-top" => .1percent) #<- important
     # user indicator
-    insert!(om, "rightmenu", 1, memory_box)
-    insert!(om, "rightmenu", 2, search_box)
+    name = getname(c)
+    user_data = OliveCreator.USERS_CACHE[name]
+    usr_img = img("usrimg", src = user_data.profile_img, width = 4percent)
+    usr_indicator = div("usrind", children = [usr_img])
+    style!(usr_indicator, "background-color" => "white", "border" => "1px solid #1e1e1e", 
+        "display" => "inline", "border-radius" => 7pt, "margin-right" => 5px, "margin-left" => 10px,
+        "cursor" => "pointer")
+    style!(usr_img, "border-radius" => 10pt)
+    on(c, usr_indicator, "click") do cm::ComponentModifier
+        alert!(cm, "hello")
+    end
+    container = div("-", children = [memory_box, search_box, usr_indicator])
+    insert!(om, "rightmenu", 1, container)
 end
 
 sumsizeof(mod::Module) = begin

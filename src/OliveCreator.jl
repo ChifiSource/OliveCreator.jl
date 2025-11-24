@@ -111,10 +111,11 @@ function load_guest_directories!(user::Olive.OliveUser)
 end
 
 function load_user_directories!(user::Olive.OliveUser)
-    posthubdir = Olive.Directory(user.name, dirtype = "posthub")
+    #posthubdir = Olive.Directory(user.name, dirtype = "posthub")
     creator_dir = Olive.Directory("users/$(user.name)/wd", dirtype = "creatorcloud")
-    community_dir = Olive.Directory("users/$(user.name)/repos", dirtype = "creatorcommunity")
-    push!(user.environment.directories, posthubdir, creator_dir, community_dir)
+   # community_dir = Olive.Directory("users/$(user.name)/repos", dirtype = "creatorcommunity")
+   # push!(user.environment.directories, posthubdir, creator_dir, community_dir)
+    push!(user.environment.directories, creator_dir)
 end
 
 function load_feed_environment!(user::Olive.OliveUser)
@@ -253,7 +254,7 @@ custom_sheet = begin
     buttons = stys["button"]
     buttons["border-radius"] = 4px
     buttons["border"] = "2px solid #3D3D3D"
-    stys[".material-icons"]["color"] = "#171717"
+    stys[".material-icons"]["color"] = "#91469e"
     push!(stys, buttons[:extras] ...)
     delete!(buttons.properties, :extras)
     banim = keyframes("banim")
@@ -277,8 +278,8 @@ custom_sheet = begin
     standard_inp = style("div.stdinp", "background-color" => "#1e1e1e", "border-radius" => 4px, "padding" => 1.25percent, 
         "color" => "white", "font-size" => 15pt)
     push!(stys, standard_inp)
-    stys["a.tablabel"]["color"] = "#171717"
-    stys["div.tabopen"]["background-color"] = "#e77254"
+    stys["a.tablabel"]["color"] = "white"
+    stys["div.tabopen"]["background-color"] = "0F0F0F0F"
     style!(stys["div.projectwindow"], "background-color" => "#2e2e2e", "border-radius" => 0px)
     push!(custom_sheet, new_topbars)
     custom_sheet

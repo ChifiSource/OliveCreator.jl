@@ -105,6 +105,12 @@ getindex(um::UserManager, name::String) = begin
     loaded_user::CreatorUser
 end
 
+function clear_user_cache!(user_manager::UserManager)
+    for (e, user) in enumerate(user_manager.cached)
+   #     recompress_user_data(name::String; remove::Bool = true)
+    end
+end
+
 USERS_CACHE = UserManager()
 
 struct Achievement
@@ -121,5 +127,7 @@ function read_achievements()
         Achievement(parse(Int64, splits[1]), string(splits[2]), string(splits[3]), splits[4])
     end for achievement_str in split(raw, "\n")]::Vector{Achievement}
 end
+
+
 
 ACHIEVEMENTS = read_achievements()
