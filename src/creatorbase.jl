@@ -10,14 +10,14 @@ function build(c::Connection, om::ComponentModifier, oe::OliveExtension{:creator
     style!(searchicon, "background-color" => "#36454F", "color" => "white", "border-top-right-radius" => 3pt, "border-bottom-right-radius" => 3pt, 
         "font-size" => 18pt, "padding" => .5percent, "display" => "inline-block")
     search_box = div("searbox", align = "left", children = [search, searchicon])
-    style!(search_box, "display" => "inline-flex", "overflow" => "hidden")
+    style!(search_box, "display" => "inline-flex", "overflow" => "hidden", "padding" => 0px, "border-radius" => 0px)
     if getname(c) == "guest"
         insert!(om, "rightmenu", 1, search_box)
         return
     end
     # memory progress
     progress_bar::Component{:progress} = Components.progress("memoryusage", value = 0, min = 0, max = 100)
-    style!(progress_bar, "display" => "inline-block")
+    style!(progress_bar, "display" => "inline-block", "width" => 80px, "margin-right" => 3px)
     progress_label1::Component{:a} = a("memlabel", text = "0")
     progress_label2::Component{:a} = a("memlimitlabel", text = "/ 2 GB")
     a_styles = ("font-weight" => "bold", "font-size" => 13pt, "color" => "white")
@@ -28,16 +28,17 @@ function build(c::Connection, om::ComponentModifier, oe::OliveExtension{:creator
     # user indicator
     name = getname(c)
     user_data = OliveCreator.USERS_CACHE[name]
-    usr_img = img("usrimg", src = user_data.profile_img, width = 4percent)
-    usr_indicator = div("usrind", children = [usr_img])
+    usr_img = img("usrimg", src = user_data.profile_img, width = 30px)
+    usr_indicator = div("usrind", children = [usr_img], align = "center")
     style!(usr_indicator, "background-color" => "white", "border" => "1px solid #1e1e1e", 
-        "display" => "inline", "border-radius" => 7pt, "margin-right" => 5px, "margin-left" => 10px,
-        "cursor" => "pointer")
+        "display" => "inline-flex", "border-radius" => 7pt, "margin-right" => 5px, "margin-left" => 10px,
+        "cursor" => "pointer", "padding" => 0px, "width" => 30px, "height" => 30px, "overflow" => "visible")
     style!(usr_img, "border-radius" => 10pt)
     on(c, usr_indicator, "click") do cm::ComponentModifier
         alert!(cm, "hello")
     end
     container = div("-", children = [memory_box, search_box, usr_indicator])
+    style!(container, "padding" => 0px, "border-radius" => 0px)
     insert!(om, "rightmenu", 1, container)
 end
 
