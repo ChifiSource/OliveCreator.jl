@@ -5,7 +5,7 @@ using Olive.Toolips.Components
 using Olive.ToolipsSession
 using Olive.OliveHighlighters
 using ToolipsORM
-using Olive: topbar_icon
+using Olive: topbar_icon, Directory
 import Olive: build, evalin, Cell, Project, ComponentModifier, getname, build_base_cell, olive_notify!, OliveExtension
 import Olive: on_code_evaluate, cell_bind!, get_session_key, cell_highlight!
 import Base: getindex, delete!, append!
@@ -111,11 +111,11 @@ function load_guest_directories!(user::Olive.OliveUser)
 end
 
 function load_user_directories!(user::Olive.OliveUser)
-    #posthubdir = Olive.Directory(user.name, dirtype = "posthub")
+    posthubdir = Olive.Directory(user.name, dirtype = "posthub")
     creator_dir = Olive.Directory("users/$(user.name)/wd", dirtype = "creatorcloud")
-   # community_dir = Olive.Directory("users/$(user.name)/repos", dirtype = "creatorcommunity")
-   # push!(user.environment.directories, posthubdir, creator_dir, community_dir)
-    push!(user.environment.directories, creator_dir)
+    community_dir = Olive.Directory("", dirtype = "creatorcommunity")
+    repos = Olive.Directory("users/$(user.name)/repos", dirtype = "repos")
+    push!(user.environment.directories, creator_dir, posthubdir, community_dir)
 end
 
 function load_feed_environment!(user::Olive.OliveUser)

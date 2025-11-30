@@ -127,3 +127,58 @@ function cell_bind!(c::Connection, cell::Cell{<:Any}, proj::Project{:readonly},
     end
     km::ToolipsSession.KeyMap
 end
+
+function build_optionpage_directory(c::AbstractConnection, dir::Directory{<:Any}, name::AbstractString, title::AbstractString, 
+        options::Components.AbstractComponent ...; 
+        font_color::AbstractString = "#1e1e1e", bg_color::AbstractString = "#F9F6EE")
+    post_header = div("$name-header", text = title)
+    style!(post_header, "font-size" => 16pt, "font-weight" => "bold", "color" => font_color, 
+        "cursor" => "pointer")
+    on(c, post_header, "click") do cm::ComponentModifier
+        if cm["$name-dir"]["col"] == "0"
+            style!(cm, "$name-dir", "height" => "auto", "opacity" => 100percent)
+            cm["$name-dir"] = "col" => "1"
+        else
+            style!(cm, "$name-dir", "height" => 0percent, "opacity" => 0percent)
+            cm["$name-dir"] = "col" => "0"
+        end
+        nothing::Nothing
+    end
+    postbox = div("$name-dir", children = [options ...], col = 0)
+    style!(postbox, "height" => 0percent, "opacity" => 0percent, "transition" => 750ms, "overflow" => "visible")
+    outer_section = div("$name-main", children = [post_header, postbox])
+    style!(outer_section, "background-color" => bg_color, "border-radius" => 2pt, "overflow" => "hidden")
+    outer_section::Component{:div}
+end
+
+build(c::AbstractConnection, dir::Directory{:creatorcloud}) = begin
+    div("hello")
+end
+
+build(c::AbstractConnection, dir::Directory{:posthub}) = begin
+    feed = div("feedbox", text = "feed")
+    saved = div("savedpost", text = "saved")
+    following = div("trendingpost", text = "following")
+    my_posts = div("mypost", text = "my posts")
+    options_styles = ("background-color" => "#FFFAFA", "color" => "#3d3d3d", "border-radius" => 1pt, 
+        "border" => "1px solid #3d3d3d", "cursor" => "pointer")
+    options = (feed, following, saved, my_posts)
+    for option in options
+        style!(option, options_styles ...)
+    end
+    build_optionpage_directory(c, dir, "posthub", "Posts", options ...)
+end
+
+build(c::AbstractConnection, dir::Directory{:creatorcommunity}) = begin
+    feed = div("feedbox", text = "feed")
+    saved = div("savedpost", text = "saved")
+    options_styles = ("background-color" => "#FFFAFA", "color" => "#3d3d3d", "border-radius" => 1pt, 
+        "border" => "1px solid #3d3d3d", "cursor" => "pointer")
+    style!(feed, options_styles ...)
+    style!(saved, options_styles ...)
+    build_optionpage_directory(c, dir, "creatorhub", "Community", feed, saved, bg_color = "#FFE4E1")
+end
+
+build(c::AbstractConnection, dir::Directory{:repos}) = begin
+    div("placeholder")
+end
