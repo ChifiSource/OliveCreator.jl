@@ -150,19 +150,20 @@ function build_optionpage_directory(c::AbstractConnection, dir::Directory{<:Any}
     style!(outer_section, "background-color" => bg_color, "border-radius" => 2pt, "overflow" => "hidden")
     outer_section::Component{:div}
 end
-
+#==
 build(c::AbstractConnection, dir::Directory{:creatorcloud}) = begin
     div("hello")
 end
-
+==#
 build(c::AbstractConnection, dir::Directory{:posthub}) = begin
     feed = div("feedbox", text = "feed")
     saved = div("savedpost", text = "saved")
     following = div("trendingpost", text = "following")
     my_posts = div("mypost", text = "my posts")
+    most_popular = div("feedbox", text = "most popular")
     options_styles = ("background-color" => "#FFFAFA", "color" => "#3d3d3d", "border-radius" => 1pt, 
         "border" => "1px solid #3d3d3d", "cursor" => "pointer")
-    options = (feed, following, saved, my_posts)
+    options = (most_popular, feed, following, saved, my_posts)
     for option in options
         style!(option, options_styles ...)
     end
@@ -170,15 +171,31 @@ build(c::AbstractConnection, dir::Directory{:posthub}) = begin
 end
 
 build(c::AbstractConnection, dir::Directory{:creatorcommunity}) = begin
-    feed = div("feedbox", text = "feed")
-    saved = div("savedpost", text = "saved")
+    creations = div("creations", text = "creations")
+    learn = div("learn", text = "learn")
+    groups = div("groups", text = "groups")
+    community_additions = div("commadditions", text = "community additions")
+    the_agora = div("agora", text = "the agora")
     options_styles = ("background-color" => "#FFFAFA", "color" => "#3d3d3d", "border-radius" => 1pt, 
         "border" => "1px solid #3d3d3d", "cursor" => "pointer")
-    style!(feed, options_styles ...)
-    style!(saved, options_styles ...)
-    build_optionpage_directory(c, dir, "creatorhub", "Community", feed, saved, bg_color = "#FFE4E1")
+    options = (groups, creations, learn, community_additions, the_agora)
+    for option in options
+        style!(option, options_styles ...)
+    end
+    build_optionpage_directory(c, dir, "creatorhub", "Community", options ..., bg_color = "#FFE4E1")
 end
 
 build(c::AbstractConnection, dir::Directory{:repos}) = begin
-    div("placeholder")
+    prof = div("profb", text = "profile")
+    files = div("filesb", text = "files")
+    repos = div("reposb", text = "repositories")
+    myposts = div("myposts", text = "posts")
+    mycreations = div("mycreations", text = "creations")
+    options_styles = ("background-color" => "#FFFAFA", "color" => "#3d3d3d", "border-radius" => 1pt, 
+        "border" => "1px solid #3d3d3d", "cursor" => "pointer")
+    options = (prof, files, repos, myposts, mycreations)
+    for option in options
+        style!(option, options_styles ...)
+    end
+    build_optionpage_directory(c, dir, "me", Olive.getname(c), options ...)
 end

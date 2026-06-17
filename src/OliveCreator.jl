@@ -111,11 +111,11 @@ function load_guest_directories!(user::Olive.OliveUser)
 end
 
 function load_user_directories!(user::Olive.OliveUser)
-    posthubdir = Olive.Directory(user.name, dirtype = "posthub")
     creator_dir = Olive.Directory("users/$(user.name)/wd", dirtype = "creatorcloud")
+    posthubdir = Olive.Directory(user.name, dirtype = "posthub")
     community_dir = Olive.Directory("", dirtype = "creatorcommunity")
     repos = Olive.Directory("users/$(user.name)/repos", dirtype = "repos")
-    push!(user.environment.directories, creator_dir, posthubdir, community_dir)
+    push!(user.environment.directories, creator_dir, repos, posthubdir, community_dir)
 end
 
 function load_feed_environment!(user::Olive.OliveUser)
